@@ -1,0 +1,41 @@
+CREATE DATABASE IF NOT EXISTS TuViApp;
+USE TuViApp;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  full_name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  birthday DATE NULL,
+  gender VARCHAR(50) NULL,
+  device_id VARCHAR(255) NULL,
+  device_info TEXT NULL,
+  firebase_token TEXT NULL,
+  user_code VARCHAR(100) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_users_device_id (device_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS user_astro_profiles (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  can_chi VARCHAR(255) NULL,
+  cung_phi VARCHAR(50) NULL,
+  life_path TINYINT UNSIGNED NULL,
+  expression TINYINT UNSIGNED NULL,
+  soul TINYINT UNSIGNED NULL,
+  dung_y VARCHAR(50) NULL,
+  ky_than VARCHAR(50) NULL,
+  tu_tru TEXT NULL,
+  tu_vi TEXT NULL,
+  huong TEXT NULL,
+  mau_sac_vat_pham TEXT NULL,
+  bieu_do_ngay_sinh TEXT NULL,
+  ngu_hanh_ten TEXT NULL,
+  so_net TEXT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_user_id (user_id),
+  KEY idx_cung_phi (cung_phi),
+  CONSTRAINT fk_user_astro_profiles_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
