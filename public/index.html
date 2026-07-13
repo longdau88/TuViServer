@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lá Số Tử Vi</title>
+    <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body>
+    <main class="shell">
+        <section class="loading-panel" id="loadingView">
+            <div class="hero__badge">Lá số Tử Vi</div>
+            <h1>Đang khởi tạo phiên làm việc</h1>
+            <p id="loadingText">Đang chờ hệ thống lấy token và nhận diện thiết bị.</p>
+            <div class="loading-meta">
+                <span>Device ID</span>
+                <strong id="deviceIdText">-</strong>
+            </div>
+        </section>
+
+        <section class="create-card" id="createView" style="display: none;">
+            <div class="section-title">
+                <h2>Thiết bị chưa có user</h2>
+                <span>Hãy tạo hồ sơ để xem lá số</span>
+            </div>
+
+            <form id="createUserForm" class="create-form">
+                <label>
+                    <span>Họ và tên</span>
+                    <input id="createFullName" type="text" placeholder="Ngô Thanh Long" />
+                </label>
+                <label>
+                    <span>Email</span>
+                    <input id="createEmail" type="email" placeholder="you@example.com" />
+                </label>
+                <label>
+                    <span>Ngày sinh</span>
+                    <input id="createBirthday" type="date" />
+                </label>
+                <label>
+                    <span>Giới tính</span>
+                    <select id="createGender">
+                        <option value="male">Nam</option>
+                        <option value="female">Nữ</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Ảnh đại diện</span>
+                    <input id="createAvatarFile" type="file" accept="image/*" />
+                </label>
+                <div class="avatar-picker-preview" id="createAvatarPreview">
+                    <span>Chưa chọn ảnh</span>
+                </div>
+                <div class="form-actions">
+                    <button id="cancelEditButton" type="button" class="secondary-button"
+                        style="display: none;">Hủy</button>
+                    <button id="createButton" type="submit">Tạo user</button>
+                </div>
+            </form>
+            <div class="status" id="createStatus">-</div>
+        </section>
+
+        <section class="profile-card" id="mainView" style="display: none;">
+            <div class="profile-actions">
+                <button type="button" id="editProfileButton" class="secondary-button">Thay đổi thông tin</button>
+            </div>
+            <div class="profile-card__top">
+                <div class="avatar-wrap">
+                    <img id="avatarImage" alt="Avatar user" />
+                    <div class="avatar-fallback" id="avatarFallback"></div>
+                </div>
+                <div class="profile-meta">
+                    <h2 id="fullName">-</h2>
+                    <p id="subtitle">-</p>
+                    <div class="meta-grid">
+                        <div><span>Ngày sinh dương</span><strong id="solarBirth">-</strong></div>
+                        <div><span>Ngày sinh âm</span><strong id="lunarBirth">-</strong></div>
+                        <div><span>Tuổi</span><strong id="ageLabel">-</strong></div>
+                        <div><span>Can Chi</span><strong id="canChiLabel">-</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="center-info">
+                <div class="center-info__title">Thông tin trung tâm</div>
+                <div class="chips" id="centerChips"></div>
+            </div>
+
+            <div class="chart-section">
+                <div class="section-title">
+                    <h3>Lá số 12 cung</h3>
+                    <span id="chartSummary">-</span>
+                </div>
+                <div class="palace-grid" id="palaceGrid"></div>
+            </div>
+        </section>
+    </main>
+
+    <template id="palaceTemplate">
+        <article class="palace-card">
+            <div class="palace-card__header">
+                <div class="palace-name"></div>
+                <div class="palace-age"></div>
+            </div>
+            <div class="star-list palace-main-stars"></div>
+            <div class="star-group">
+                <span>Cát tinh</span>
+                <div class="star-list palace-cat-stars"></div>
+            </div>
+            <div class="star-group">
+                <span>Hung tinh</span>
+                <div class="star-list palace-hung-stars"></div>
+            </div>
+            <div class="palace-footer">
+                <span class="palace-vong"></span>
+                <span class="palace-element"></span>
+            </div>
+        </article>
+    </template>
+
+    <script src="/app.js"></script>
+</body>
+
+</html>

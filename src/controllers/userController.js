@@ -1,4 +1,4 @@
-const { findUserByDeviceId, findUserById, createUser, buildClientDisplayData } = require('../models/userModel');
+const { findUserByDeviceId, findUserById, createUser, updateUser, buildClientDisplayData } = require('../models/userModel');
 
 exports.checkDeviceId = async (req, res) => {
     const deviceId = req.query.device_id;
@@ -38,7 +38,11 @@ exports.checkDeviceId = async (req, res) => {
 };
 
 exports.createUser = async (req, res) => {
-    const { full_name, email, birthday, gender, device_id, device_info, firebase_token } = req.body;
+    const { user_id, full_name, email, birthday, gender, device_id, device_info, avatar_base64, firebase_token } = req.body;
+
+    if (user_id) {
+        return exports.updateUser(req, res);
+    }
 
     if (!full_name || !email || !birthday || !gender || !device_id) {
         return res.status(400).json({
@@ -57,6 +61,7 @@ exports.createUser = async (req, res) => {
             gender,
             device_id,
             device_info,
+            avatar_base64,
             firebase_token,
         });
 
@@ -77,6 +82,74 @@ exports.createUser = async (req, res) => {
         }
 
         console.error('createUser error:', error);
+        return res.status(500).json({
+            status: 500,
+            error: 1,
+            message: 'Internal Server Error',
+            data: {},
+        });
+    }
+};
+
+exports.updateUser = async (req, res) => {
+    const { user_id, full_name, email, birthday, gender, device_info, avatar_base64, firebase_token } = req.body;
+
+    if (!user_id || !full_name || !email || !birthday || !gender) {
+        return res.status(400).json({
+            status: 400,
+            error: 1,
+            message: 'Missing required fields: user_id, full_name, email, birthday, gender',
+            data: {},
+        });
+    }
+
+    try {
+        const updatedUser = await updateUser({
+            user_id,
+            full_name,
+            email,
+            birthday,
+            gender,
+            device_info,
+            avatar_base64,
+            firebase_token,
+        });
+
+        return res.json({
+            status: 200,
+            error: 0,
+            message: 'OK',
+            data: updatedUser,
+        });
+    } catch (error) {
+        if (error.code === 'DUPLICATE_EMAIL') {
+            return res.status(409).json({
+                status: 409,
+                error: 1,
+                message: 'Email already exists',
+                data: {},
+            });
+        }
+
+        if (error.code === 'USER_NOT_FOUND') {
+            return res.status(404).json({
+                status: 404,
+                error: 1,
+                message: 'User not found',
+                data: {},
+            });
+        }
+
+        if (error.code === 'INVALID_USER_ID') {
+            return res.status(400).json({
+                status: 400,
+                error: 1,
+                message: 'Invalid user_id',
+                data: {},
+            });
+        }
+
+        console.error('updateUser error:', error);
         return res.status(500).json({
             status: 500,
             error: 1,

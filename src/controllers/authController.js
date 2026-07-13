@@ -12,6 +12,17 @@ if (!tokenSecret) {
     throw new Error('JWT_SECRET must be set in .env');
 }
 
+const signAccessToken = (subject) => jwt.sign(
+    {
+        sub: subject,
+        scopes: [],
+    },
+    tokenSecret,
+    {
+        expiresIn: tokenExpiresIn,
+    },
+);
+
 exports.getToken = (req, res) => {
     const { grant_type, username, password } = req.body;
 
@@ -27,14 +38,17 @@ exports.getToken = (req, res) => {
         return res.status(401).json({ error: 'invalid_client' });
     }
 
-    const payload = {
-        sub: username,
-        scopes: [],
-    };
+    const accessToken = signAccessToken(username);
 
-    const accessToken = jwt.sign(payload, tokenSecret, {
-        expiresIn: tokenExpiresIn,
+    return res.json({
+        token_type: 'Bearer',
+        expires_in: tokenExpiresIn,
+        access_token: accessToken,
     });
+};
+
+exports.getWebToken = (_req, res) => {
+    const accessToken = signAccessToken('web-ui');
 
     return res.json({
         token_type: 'Bearer',

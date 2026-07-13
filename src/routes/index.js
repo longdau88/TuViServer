@@ -7,7 +7,7 @@ const { authenticateToken } = require('../middleware/authMiddleware');
 
 router.use('/oauth', authRoutes);
 router.use('/api/user', authenticateToken, userRoutes);
-router.get('/', healthController.getHealth);
+router.get('/health', healthController.getHealth);
 router.get('/protected', authenticateToken, healthController.getHealth);
 
 module.exports = router;

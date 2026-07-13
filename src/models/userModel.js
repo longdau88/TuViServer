@@ -423,6 +423,43 @@ const getBirthChartSummary = (lifePath, elementInfo) => {
     return `Số chủ đạo ${lifePath} kết hợp hành tên ${elementInfo.dominant} cho thấy một người có xu hướng cân bằng năng lượng và phát triển từ nội lực.`;
 };
 
+const parseJsonMaybe = (value) => {
+    if (!value || typeof value !== 'string') return value || null;
+    try {
+        return JSON.parse(value);
+    } catch (error) {
+        return null;
+    }
+};
+
+const extractAvatarUrl = (deviceInfo) => {
+    const parsed = typeof deviceInfo === 'string' ? parseJsonMaybe(deviceInfo) : deviceInfo;
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    const avatarCandidates = [
+        parsed.avatar_url,
+        parsed.avatarUrl,
+        parsed.photo_url,
+        parsed.photoUrl,
+        parsed.photoURL,
+        parsed.image_url,
+        parsed.imageUrl,
+        parsed.image,
+        parsed.picture,
+        parsed.picture_url,
+        parsed.pictureUrl,
+        parsed.url,
+    ];
+
+    return avatarCandidates.find((candidate) => typeof candidate === 'string' && candidate.trim())?.trim() || null;
+};
+
+const extractAvatarBase64 = (avatarBase64) => {
+    if (!avatarBase64 || typeof avatarBase64 !== 'string') return null;
+    const trimmed = avatarBase64.trim();
+    return trimmed.length > 0 ? trimmed : null;
+};
+
 const buildChiTietAmLich = (canChi) => {
     if (!canChi?.raw?.year) return null;
     const parts = [];
@@ -630,6 +667,9 @@ const buildClientDisplayData = (user) => {
         la_so_12_cung: palaces,
         meta: {
             user_id: user.id,
+            full_name: user.full_name,
+            gender: user.gender || null,
+            birthday: user.birthday ? formatDateToYMD(user.birthday) : null,
             lunar_birth: fullLunarBirth,
             can_chi: astro.can_chi || buildCanChiString(canChiBirth),
             cung_phi: astro.cung_phi || null,
@@ -644,53 +684,31 @@ const buildClientDisplayData = (user) => {
 const formatUserRow = (row) => {
     if (!row) return null;
     const lunar_birth = convertToLunar(row.birthday);
+    const deviceInfoParsed = parseJsonMaybe(row.device_info);
+    const avatarBase64 = extractAvatarBase64(row.avatar_base64);
     let tu_tru = null;
     if (row.tu_tru) {
-        try {
-            tu_tru = JSON.parse(row.tu_tru);
-        } catch (error) {
-            tu_tru = null;
-        }
+        tu_tru = parseJsonMaybe(row.tu_tru);
     }
     let tu_vi = null;
     if (row.tu_vi) {
-        try {
-            tu_vi = JSON.parse(row.tu_vi);
-        } catch (error) {
-            tu_vi = null;
-        }
+        tu_vi = parseJsonMaybe(row.tu_vi);
     }
     let huong = null;
     if (row.huong) {
-        try {
-            huong = JSON.parse(row.huong);
-        } catch (error) {
-            huong = null;
-        }
+        huong = parseJsonMaybe(row.huong);
     }
     let mau_sac_vat_pham = null;
     if (row.mau_sac_vat_pham) {
-        try {
-            mau_sac_vat_pham = JSON.parse(row.mau_sac_vat_pham);
-        } catch (error) {
-            mau_sac_vat_pham = null;
-        }
+        mau_sac_vat_pham = parseJsonMaybe(row.mau_sac_vat_pham);
     }
     let ngu_hanh_ten = null;
     if (row.ngu_hanh_ten) {
-        try {
-            ngu_hanh_ten = JSON.parse(row.ngu_hanh_ten);
-        } catch (error) {
-            ngu_hanh_ten = null;
-        }
+        ngu_hanh_ten = parseJsonMaybe(row.ngu_hanh_ten);
     }
     let so_net = null;
     if (row.so_net) {
-        try {
-            so_net = JSON.parse(row.so_net);
-        } catch (error) {
-            so_net = null;
-        }
+        so_net = parseJsonMaybe(row.so_net);
     }
     const astro_profile = {
         lunar_birth,
@@ -716,6 +734,9 @@ const formatUserRow = (row) => {
         gender: row.gender || null,
         device_id: row.device_id || null,
         device_info: row.device_info || null,
+        device_info_parsed: deviceInfoParsed,
+        avatar_base64: avatarBase64,
+        avatar_url: avatarBase64 || extractAvatarUrl(deviceInfoParsed),
         firebase_token: row.firebase_token || null,
         user_code: row.user_code || null,
         created_at: row.created_at,
@@ -825,6 +846,7 @@ const createUsersTable = async () => {
       gender VARCHAR(50) NULL,
       device_id VARCHAR(255) NULL,
       device_info TEXT NULL,
+    avatar_base64 LONGTEXT NULL,
       firebase_token TEXT NULL,
       user_code VARCHAR(100) NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -840,6 +862,12 @@ const createUsersTable = async () => {
         'idx_users_device_id',
         'CREATE INDEX idx_users_device_id ON users (device_id)',
     );
+
+    const [avatarColumns] = await pool.query("SHOW COLUMNS FROM users LIKE 'avatar_base64'");
+    if (avatarColumns.length === 0) {
+        await pool.query('ALTER TABLE users ADD COLUMN avatar_base64 LONGTEXT NULL AFTER device_info');
+        console.log('[DB] Added missing column: users.avatar_base64');
+    }
 
     const sqlAstro = `
     CREATE TABLE IF NOT EXISTS user_astro_profiles (
@@ -879,6 +907,7 @@ const createUsersTable = async () => {
         { name: 'bieu_do_ngay_sinh', type: 'TEXT NULL' },
         { name: 'ngu_hanh_ten', type: 'TEXT NULL' },
         { name: 'so_net', type: 'TEXT NULL' },
+        { name: 'avatar_base64', type: 'LONGTEXT NULL' },
     ];
 
     for (const col of newColumns) {
@@ -900,7 +929,7 @@ const createUsersTable = async () => {
 const findUserByDeviceId = async (deviceId) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender,
-               u.device_id, u.device_info, u.firebase_token, u.user_code, u.created_at, u.updated_at,
+             u.device_id, u.device_info, u.avatar_base64, u.firebase_token, u.user_code, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
         FROM users u
@@ -915,7 +944,7 @@ const findUserByDeviceId = async (deviceId) => {
 const findUserById = async (userId) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender,
-               u.device_id, u.device_info, u.firebase_token, u.user_code, u.created_at, u.updated_at,
+             u.device_id, u.device_info, u.avatar_base64, u.firebase_token, u.user_code, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
         FROM users u
@@ -930,7 +959,7 @@ const findUserById = async (userId) => {
 const findUserByEmail = async (email) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender,
-               u.device_id, u.device_info, u.firebase_token, u.user_code, u.created_at, u.updated_at,
+             u.device_id, u.device_info, u.avatar_base64, u.firebase_token, u.user_code, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
         FROM users u
@@ -977,7 +1006,6 @@ const convertToLunar = (birthday) => {
         return null;
     }
 };
-
 const buildAstroProfile = (fullName, birthday, gender) => {
     const lunarBirth = convertToLunar(birthday);
     const canChi = buildCanChi(birthday);
@@ -1021,13 +1049,14 @@ const buildAstroProfile = (fullName, birthday, gender) => {
 };
 
 const createUser = async (userData) => {
-    const { full_name, email, birthday, gender, device_id, device_info, firebase_token } = userData;
+    const { full_name, email, birthday, gender, device_id, device_info, avatar_base64, firebase_token } = userData;
     const normalizedEmail = String(email).trim();
     const normalizedBirthday = normalizeBirthday(birthday);
     const astroProfile = buildAstroProfile(full_name, normalizedBirthday, gender);
     const can_chi = buildCanChi(normalizedBirthday);
     const canChiString = buildCanChiString(can_chi);
     const cung_phi = astroProfile.cung_phi;
+    const normalizedAvatarBase64 = extractAvatarBase64(avatar_base64);
 
     const existingUser = await findUserByDeviceId(device_id);
 
@@ -1044,6 +1073,7 @@ const createUser = async (userData) => {
                 birthday = ?,
                 gender = ?,
                 device_info = ?,
+                avatar_base64 = COALESCE(?, avatar_base64),
                 firebase_token = ?
             WHERE device_id = ?
         `;
@@ -1053,6 +1083,7 @@ const createUser = async (userData) => {
             normalizedBirthday,
             gender,
             device_info,
+            normalizedAvatarBase64,
             firebase_token,
             device_id,
         ];
@@ -1093,8 +1124,8 @@ const createUser = async (userData) => {
     const user_code = generateUserCode();
 
     const sql = `
-        INSERT INTO users (full_name, email, birthday, gender, device_id, device_info, firebase_token, user_code)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO users (full_name, email, birthday, gender, device_id, device_info, avatar_base64, firebase_token, user_code)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
         full_name,
@@ -1103,6 +1134,7 @@ const createUser = async (userData) => {
         gender,
         device_id,
         device_info,
+        normalizedAvatarBase64,
         firebase_token,
         user_code,
     ];
@@ -1136,12 +1168,96 @@ const createUser = async (userData) => {
     return await findUserByDeviceId(device_id);
 };
 
+const updateUser = async (userData) => {
+    const { user_id, full_name, email, birthday, gender, device_info, avatar_base64, firebase_token } = userData;
+    const userId = Number(user_id);
+
+    if (!userId || Number.isNaN(userId) || userId <= 0) {
+        const error = new Error('Invalid user_id');
+        error.code = 'INVALID_USER_ID';
+        error.status = 400;
+        throw error;
+    }
+
+    const existingUser = await findUserById(userId);
+    if (!existingUser) {
+        const error = new Error(`User not found: ${userId}`);
+        error.code = 'USER_NOT_FOUND';
+        error.status = 404;
+        throw error;
+    }
+
+    const normalizedEmail = String(email).trim();
+    const normalizedBirthday = normalizeBirthday(birthday);
+    const normalizedAvatarBase64 = extractAvatarBase64(avatar_base64);
+    const astroProfile = buildAstroProfile(full_name, normalizedBirthday, gender);
+    const can_chi = buildCanChi(normalizedBirthday);
+    const canChiString = buildCanChiString(can_chi);
+    const cung_phi = astroProfile.cung_phi;
+
+    const existingEmailUser = await findUserByEmail(normalizedEmail);
+    if (existingEmailUser && existingEmailUser.id !== userId) {
+        throw createDuplicateEmailError(normalizedEmail);
+    }
+
+    const sql = `
+        UPDATE users
+        SET full_name = ?,
+            email = ?,
+            birthday = ?,
+            gender = ?,
+            device_info = ?,
+            avatar_base64 = COALESCE(?, avatar_base64),
+            firebase_token = ?
+        WHERE id = ?
+    `;
+    const values = [
+        full_name,
+        normalizedEmail,
+        normalizedBirthday,
+        gender,
+        device_info,
+        normalizedAvatarBase64,
+        firebase_token,
+        userId,
+    ];
+
+    try {
+        await pool.query(sql, values);
+    } catch (error) {
+        if (isDuplicateEmailError(error)) {
+            throw createDuplicateEmailError(normalizedEmail);
+        }
+        throw error;
+    }
+
+    await upsertAstroProfile(userId, {
+        can_chi: canChiString,
+        cung_phi,
+        so_chu_dao: astroProfile.so_chu_dao,
+        chi_so_su_menh: astroProfile.chi_so_su_menh,
+        chi_so_linh_hon: astroProfile.chi_so_linh_hon,
+        dung_y: astroProfile.tu_tru?.detail?.dung_y,
+        ky_than: astroProfile.tu_tru?.detail?.ky_than,
+        tu_tru: astroProfile.tu_tru,
+        tu_vi: astroProfile.tu_vi,
+        huong: astroProfile.huong,
+        mau_sac_vat_pham: astroProfile.mau_sac_vat_pham,
+        bieu_do_ngay_sinh: astroProfile.bieu_do_ngay_sinh,
+        ngu_hanh_ten: astroProfile.ngu_hanh_ten,
+        so_net: astroProfile.so_net,
+    });
+
+    return await findUserById(userId);
+};
+
 module.exports = {
     createUsersTable,
     findUserByDeviceId,
     findUserById,
     findUserByEmail,
     createUser,
+    updateUser,
     buildAstroProfile,
     buildClientDisplayData,
 };

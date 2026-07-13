@@ -5,5 +5,6 @@ const userController = require('../controllers/userController');
 router.get('/check-device_id', userController.checkDeviceId);
 router.get('/la-so-tu-vi', userController.getProfileDisplay);
 router.post('/create', userController.createUser);
+router.post('/update-user', userController.updateUser);
 
 module.exports = router;

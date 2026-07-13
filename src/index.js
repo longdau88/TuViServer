@@ -6,13 +6,22 @@ dotenv.config();
 
 const port = process.env.PORT || 3000;
 
+const startServer = (dbReady) => {
+    app.listen(port, () => {
+        if (dbReady) {
+            console.log(`Server running at http://localhost:${port}`);
+            return;
+        }
+
+        console.warn(`Server running at http://localhost:${port} (database unavailable)`);
+    });
+};
+
 createUsersTable()
     .then(() => {
-        app.listen(port, () => {
-            console.log(`Server running at http://localhost:${port}`);
-        });
+        startServer(true);
     })
     .catch((error) => {
         console.error('Failed to initialize database:', error);
-        process.exit(1);
+        startServer(false);
     });
