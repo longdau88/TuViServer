@@ -37,32 +37,45 @@ const elementGroups = {
     tho: new Set(['A', 'E', 'I', 'O']),
 };
 
-const formatDateToYMD = (date) => {
+const parseDateInput = (date) => {
     if (!date) return null;
-    const d = typeof date === 'string' ? new Date(date) : date;
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+
+    if (typeof date === 'string') {
+        const trimmed = date.trim();
+        const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+        if (dateOnlyMatch) {
+            const year = Number(dateOnlyMatch[1]);
+            const month = Number(dateOnlyMatch[2]);
+            const day = Number(dateOnlyMatch[3]);
+            return { date: new Date(year, month - 1, day), hasTime: false };
+        }
+
+        const parsed = new Date(trimmed);
+        if (Number.isNaN(parsed.getTime())) return null;
+        return { date: parsed, hasTime: /\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(trimmed) };
+    }
+
+    if (date instanceof Date) {
+        if (Number.isNaN(date.getTime())) return null;
+        return { date, hasTime: true };
+    }
+
+    return null;
+};
+
+const formatDateToYMD = (date) => {
+    const parsed = parseDateInput(date);
+    if (!parsed) return null;
+
+    const { date: parsedDate } = parsed;
+    const year = parsedDate.getFullYear();
+    const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(parsedDate.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 };
 
 const parseBirthdayDate = (birthday) => {
-    if (!birthday) return null;
-    let date;
-
-    if (typeof birthday === 'string') {
-        const trimmed = birthday.trim();
-        date = new Date(trimmed);
-        if (isNaN(date)) return null;
-        const hasTime = /\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(trimmed);
-        return { date, hasTime };
-    }
-
-    if (birthday instanceof Date) {
-        return { date: birthday, hasTime: true };
-    }
-
-    return null;
+    return parseDateInput(birthday);
 };
 
 const normalizeBirthday = (birthday) => {
@@ -410,6 +423,224 @@ const getBirthChartSummary = (lifePath, elementInfo) => {
     return `Số chủ đạo ${lifePath} kết hợp hành tên ${elementInfo.dominant} cho thấy một người có xu hướng cân bằng năng lượng và phát triển từ nội lực.`;
 };
 
+const buildChiTietAmLich = (canChi) => {
+    if (!canChi?.raw?.year) return null;
+    const parts = [];
+    if (canChi.raw.year) parts.push(`Năm ${toVietnameseCanChi(canChi.raw.year) || canChi.raw.year}`);
+    if (canChi.raw.month) parts.push(`tháng ${toVietnameseCanChi(canChi.raw.month) || canChi.raw.month}`);
+    if (canChi.raw.day) parts.push(`ngày ${toVietnameseCanChi(canChi.raw.day) || canChi.raw.day}`);
+    if (canChi.raw.hour) parts.push(`giờ ${canChi.raw.hour}`);
+    return parts.join(', ');
+};
+
+const getYearPolarity = (canChi) => {
+    const stem = canChi?.raw?.year?.[0];
+    if (!stem) return null;
+    return ['甲', '丙', '戊', '庚', '壬'].includes(stem) ? 'Dương' : 'Âm';
+};
+
+const getGenderLabel = (gender) => {
+    if (!gender) return 'Nam';
+    return /^(female|f|nữ|nu)$/i.test(String(gender).trim()) ? 'Nữ' : 'Nam';
+};
+
+const getTuoiLabel = (gender, canChi) => {
+    const genderLabel = getGenderLabel(gender);
+    const polarity = getYearPolarity(canChi);
+    if (!polarity) return genderLabel;
+
+    const isFemale = genderLabel === 'Nữ';
+    const isAligned = (isFemale && polarity === 'Âm') || (!isFemale && polarity === 'Dương');
+    return `${genderLabel} (${isAligned ? 'Âm dương thuận lý' : 'Âm dương nghịch lý'})`;
+};
+
+const getCurrentYearLabel = () => {
+    const now = new Date();
+    const canChi = buildCanChi(now);
+    return `${now.getFullYear()} (${(canChi?.year || '').toUpperCase()})`;
+};
+
+const getNapAmByCanChi = (canChi) => {
+    if (!canChi?.raw?.year) return null;
+
+    const key = canChi.raw.year;
+    const mapping = {
+        甲子: 'HẢI TRUNG KIM', 乙丑: 'HẢI TRUNG KIM',
+        丙寅: 'LƯ TRUNG HỎA', 丁卯: 'LƯ TRUNG HỎA',
+        戊辰: 'ĐẠI LÂM MỘC', 己巳: 'ĐẠI LÂM MỘC',
+        庚午: 'LỘ BÀN THỔ', 辛未: 'LỘ BÀN THỔ',
+        壬申: 'KIẾM PHONG KIM', 癸酉: 'KIẾM PHONG KIM',
+        甲戌: 'SƠN ĐẦU HỎA', 乙亥: 'SƠN ĐẦU HỎA',
+        丙子: 'GIẢN HẠ THỦY', 丁丑: 'GIẢN HẠ THỦY',
+        戊寅: 'THÀNH ĐẦU THỔ', 己卯: 'THÀNH ĐẦU THỔ',
+        庚辰: 'BẠCH LẠP KIM', 辛巳: 'BẠCH LẠP KIM',
+        壬午: 'DƯƠNG LIỄU MỘC', 癸未: 'DƯƠNG LIỄU MỘC',
+        甲申: 'TUYỀN TRUNG THỦY', 乙酉: 'TUYỀN TRUNG THỦY',
+        丙戌: 'ỐC THƯỢNG THỔ', 丁亥: 'ỐC THƯỢNG THỔ',
+        戊子: 'THÍCH LỊCH HỎA', 己丑: 'THÍCH LỊCH HỎA',
+        庚寅: 'TÒNG BÁ MỘC', 辛卯: 'TÒNG BÁ MỘC',
+        壬辰: 'TRƯỜNG LƯU THỦY', 癸巳: 'TRƯỜNG LƯU THỦY',
+        甲午: 'SA TRUNG KIM', 乙未: 'SA TRUNG KIM',
+        丙申: 'SƠN HẠ HỎA', 丁酉: 'SƠN HẠ HỎA',
+        戊戌: 'BÌNH ĐỊA MỘC', 己亥: 'BÌNH ĐỊA MỘC',
+        庚子: 'BÍCH THƯỢNG THỔ', 辛丑: 'BÍCH THƯỢNG THỔ',
+        壬寅: 'KIM BẠCH KIM', 癸卯: 'KIM BẠCH KIM',
+        甲辰: 'PHÚ ĐĂNG HỎA', 乙巳: 'PHÚ ĐĂNG HỎA',
+        丙午: 'THIÊN HÀ THỦY', 丁未: 'THIÊN HÀ THỦY',
+        戊申: 'ĐẠI DỊCH THỔ', 己酉: 'ĐẠI DỊCH THỔ',
+        庚戌: 'THOA XUYẾN KIM', 辛亥: 'THOA XUYẾN KIM',
+        壬子: 'TANG ĐỐ MỘC', 癸丑: 'TANG ĐỐ MỘC',
+        甲寅: 'ĐẠI KHÊ THỦY', 乙卯: 'ĐẠI KHÊ THỦY',
+        丙辰: 'SA TRUNG THỔ', 丁巳: 'SA TRUNG THỔ',
+        戊午: 'THIÊN THƯỢNG HỎA', 己未: 'THIÊN THƯỢNG HỎA',
+        庚申: 'THẠCH LỰU MỘC', 辛酉: 'THẠCH LỰU MỘC',
+        壬戌: 'ĐẠI HẢI THỦY', 癸亥: 'ĐẠI HẢI THỦY',
+    };
+
+    return mapping[key] || null;
+};
+
+const formatLunarBirthDisplay = (birthday) => {
+    const normalized = normalizeBirthday(birthday);
+    if (!normalized) return null;
+
+    const [year, month, day] = normalized.split('-').map(Number);
+    try {
+        const lunar = solarlunar.solar2lunar(year, month, day);
+        return `${lunar.lDay}/${lunar.lMonth}/${toVietnameseCanChi(lunar.gzYear) || lunar.gzYear}`;
+    } catch (error) {
+        return null;
+    }
+};
+
+const getBanMenhAndCuc = (user) => {
+    const canChi = buildCanChi(user.birthday);
+    const napAm = getNapAmByCanChi(canChi);
+    const dominantElement = user.astro_profile?.ngu_hanh_ten?.dominant || null;
+    const cuc = dominantElement ? `${dominantElement.charAt(0).toUpperCase() + dominantElement.slice(1)} tứ Cục` : null;
+    return {
+        ban_menh: napAm,
+        cuc,
+    };
+};
+
+const build12PalaceChart = (user) => {
+    const astro = user.astro_profile || {};
+    const tuViPositions = astro.tu_vi?.chart?.positions || {};
+    const positionDetails = Object.values(tuViPositions);
+
+    const palaceTemplates = [
+        { key: 'Ty', ten_cung: 'MỆNH', ngu_hanh_cung: 'Hỏa', an_ngu: null },
+        { key: 'Ngo', ten_cung: 'PHỤ MẪU', ngu_hanh_cung: 'Hỏa', an_ngu: 'Triệt' },
+        { key: 'Mui', ten_cung: 'PHÚC ĐỨC', ngu_hanh_cung: 'Thổ', an_ngu: 'Triệt' },
+        { key: 'Than', ten_cung: 'ĐIỀN TRẠCH', ngu_hanh_cung: 'Kim', an_ngu: null },
+        { key: 'Dau', ten_cung: 'QUAN LỘC', ngu_hanh_cung: 'Kim', an_ngu: null },
+        { key: 'Tuat', ten_cung: 'NÔ BỘC', ngu_hanh_cung: 'Thổ', an_ngu: 'Tuần' },
+        { key: 'Hoi', ten_cung: 'THIÊN DI', ngu_hanh_cung: 'Thủy', an_ngu: 'Tuần' },
+        { key: 'Than_At_Ach', ten_cung: 'TẬT ÁCH', ngu_hanh_cung: 'Thủy', an_ngu: null },
+        { key: 'Mui_Tai_Bach', ten_cung: 'TÀI BẠCH (THÂN)', ngu_hanh_cung: 'Thổ', an_ngu: null },
+        { key: 'Ngo_Tu_Tuc', ten_cung: 'TỬ TỨC', ngu_hanh_cung: 'Mộc', an_ngu: null },
+        { key: 'Ty_Phu_The', ten_cung: 'PHU THÊ', ngu_hanh_cung: 'Mộc', an_ngu: null },
+        { key: 'Thin', ten_cung: 'HUYNH ĐỆ', ngu_hanh_cung: 'Thổ', an_ngu: null },
+    ];
+
+    const vongTrangSinhSequence = [
+        'Tràng sinh',
+        'Mộc dục',
+        'Quan đới',
+        'Lâm quan',
+        'Đế vượng',
+        'Suy',
+        'Bệnh',
+        'Tử',
+        'Mộ',
+        'Tuyệt',
+        'Thai',
+        'Dưỡng',
+    ];
+
+    const chart = {};
+
+    palaceTemplates.forEach((template, index) => {
+        const detail = positionDetails[index] || {};
+        const mainStar = detail.main_star || null;
+        const supportStars = Array.isArray(detail.support_stars) ? detail.support_stars.filter(Boolean) : [];
+
+        chart[template.key] = {
+            ten_cung: template.ten_cung,
+            dai_han: 4 + index * 10,
+            chinh_tinh: mainStar ? [{ ten: mainStar, trang_thai: '', loai: 'binh' }] : [],
+            cat_tinh: supportStars,
+            hung_tinh: [],
+            an_ngu: template.an_ngu,
+            vong_trang_sinh: vongTrangSinhSequence[index],
+            ngu_hanh_cung: template.ngu_hanh_cung,
+        };
+    });
+
+    return chart;
+};
+
+const calculateAge = (birthday) => {
+    const normalized = normalizeBirthday(birthday);
+    if (!normalized) return null;
+
+    const [year, month, day] = normalized.split('-').map(Number);
+    const birthDate = new Date(year, month - 1, day);
+    if (Number.isNaN(birthDate.getTime())) return null;
+
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age -= 1;
+    }
+
+    return age;
+};
+
+const buildClientDisplayData = (user) => {
+    if (!user) return null;
+
+    const astro = user.astro_profile || {};
+    const canChiBirth = buildCanChi(user.birthday);
+    const currentYearLabel = getCurrentYearLabel();
+    const namXemYearCanChi = currentYearLabel.match(/\(([^)]+)\)/)?.[1] || null;
+    const banMenhAndCuc = getBanMenhAndCuc(user);
+    const palaces = build12PalaceChart(user);
+    const canChiString = buildChiTietAmLich(canChiBirth);
+    const lunarBirth = formatLunarBirthDisplay(user.birthday);
+    const fullLunarBirth = convertToLunar(user.birthday);
+
+    return {
+        thong_tin_trung_tam: {
+            nam_xem: currentYearLabel,
+            ngay_sinh_duong: user.birthday ? formatDateToYMD(user.birthday) : null,
+            ngay_sinh_am: lunarBirth,
+            chi_tiet_am_lich: canChiString,
+            tuoi: getTuoiLabel(user.gender, canChiBirth),
+            ban_menh: banMenhAndCuc.ban_menh,
+            cuc: banMenhAndCuc.cuc,
+            menh_chu: astro.tu_vi?.chart?.positions ? Object.values(astro.tu_vi.chart.positions)[0]?.main_star || null : null,
+            than_chu: astro.tu_vi?.chart?.positions ? Object.values(astro.tu_vi.chart.positions)[1]?.main_star || null : null,
+            cuc_hoa_ban_menh: banMenhAndCuc.ban_menh && banMenhAndCuc.cuc ? 'Cục hòa Bản Mệnh' : null,
+            don_vi_cap: 'Thăng long đạo quán VN',
+        },
+        la_so_12_cung: palaces,
+        meta: {
+            user_id: user.id,
+            lunar_birth: fullLunarBirth,
+            can_chi: astro.can_chi || buildCanChiString(canChiBirth),
+            cung_phi: astro.cung_phi || null,
+            life_path: astro.so_chu_dao || null,
+            expression: astro.chi_so_su_menh || null,
+            soul: astro.chi_so_linh_hon || null,
+            summary: getBirthChartSummary(astro.so_chu_dao, astro.ngu_hanh_ten),
+        },
+    };
+};
+
 const formatUserRow = (row) => {
     if (!row) return null;
     const lunar_birth = convertToLunar(row.birthday);
@@ -610,27 +841,6 @@ const createUsersTable = async () => {
         'CREATE INDEX idx_users_device_id ON users (device_id)',
     );
 
-    const [userColumns] = await pool.query("SHOW COLUMNS FROM users LIKE 'astro_profile'");
-    if (userColumns.length > 0) {
-        console.warn('[DB] Removing deprecated users.astro_profile column to avoid redundant storage.');
-        await pool.query('ALTER TABLE users DROP COLUMN astro_profile');
-    }
-
-    const [userLunarColumns] = await pool.query("SHOW COLUMNS FROM users LIKE 'lunar_birth'");
-    if (userLunarColumns.length > 0) {
-        console.warn('[DB] Removing redundant users.lunar_birth column as it can be computed from birthday.');
-        await pool.query('ALTER TABLE users DROP COLUMN lunar_birth');
-    }
-
-    const [statusRows] = await pool.query("SHOW TABLE STATUS LIKE 'user_astro_profiles'");
-    if (statusRows.length > 0) {
-        const status = statusRows[0];
-        if (!status.Engine || (status.Comment && status.Comment.includes("doesn't exist in engine"))) {
-            console.error(`[DB] Detected corrupted user_astro_profiles table: ${status.Comment || 'engine metadata invalid'}. Recreating table...`);
-            await pool.query('DROP TABLE IF EXISTS user_astro_profiles');
-        }
-    }
-
     const sqlAstro = `
     CREATE TABLE IF NOT EXISTS user_astro_profiles (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -702,6 +912,21 @@ const findUserByDeviceId = async (deviceId) => {
     return rows.length > 0 ? formatUserRow(rows[0]) : null;
 };
 
+const findUserById = async (userId) => {
+    const sql = `
+        SELECT u.id, u.full_name, u.email, u.birthday, u.gender,
+               u.device_id, u.device_info, u.firebase_token, u.user_code, u.created_at, u.updated_at,
+               p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
+               p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
+        FROM users u
+        LEFT JOIN user_astro_profiles p ON u.id = p.user_id
+        WHERE u.id = ?
+        LIMIT 1
+    `;
+    const [rows] = await pool.query(sql, [userId]);
+    return rows.length > 0 ? formatUserRow(rows[0]) : null;
+};
+
 const findUserByEmail = async (email) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender,
@@ -759,7 +984,8 @@ const buildAstroProfile = (fullName, birthday, gender) => {
     const lifePath = calculateLifePathNumber(birthday);
     const expression = calculateExpressionNumber(fullName);
     const soul = calculateSoulNumber(fullName);
-    const year = birthday ? Number(normalizeBirthday(birthday).split('-')[0]) : null;
+    const normalizedBirthday = normalizeBirthday(birthday);
+    const year = normalizedBirthday ? Number(normalizedBirthday.split('-')[0]) : null;
     const cungPhi = getCungPhi(year, gender);
     const directions = getDirectionsForCungPhi(cungPhi);
     const colorAndItems = getColorAndItems(cungPhi);
@@ -913,7 +1139,9 @@ const createUser = async (userData) => {
 module.exports = {
     createUsersTable,
     findUserByDeviceId,
+    findUserById,
     findUserByEmail,
     createUser,
     buildAstroProfile,
+    buildClientDisplayData,
 };
