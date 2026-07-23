@@ -668,6 +668,11 @@ const buildClientDisplayData = (user) => {
         meta: {
             user_id: user.id,
             full_name: user.full_name,
+            // The web profile renders the avatar from this display payload.
+            // Prefer the image stored in users.avatar_base64, then fall back to
+            // an avatar URL that may have been supplied in device_info.
+            avatar_base64: user.avatar_base64 || null,
+            avatar_url: user.avatar_url || user.avatar_base64 || null,
             gender: user.gender || null,
             birthday: user.birthday ? formatDateToYMD(user.birthday) : null,
             lunar_birth: fullLunarBirth,
