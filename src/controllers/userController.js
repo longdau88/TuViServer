@@ -38,17 +38,17 @@ exports.checkDeviceId = async (req, res) => {
 };
 
 exports.createUser = async (req, res) => {
-    const { user_id, full_name, email, birthday, gender, device_id, device_info, avatar_base64, firebase_token } = req.body;
+    const { user_id, full_name, email, birthday, birth_time, gender, device_id, device_info, avatar_base64, firebase_token } = req.body;
 
     if (user_id) {
         return exports.updateUser(req, res);
     }
 
-    if (!full_name || !email || !birthday || !gender || !device_id) {
+    if (!full_name || !email || !birthday || !birth_time || !gender || !device_id) {
         return res.status(400).json({
             status: 400,
             error: 1,
-            message: 'Missing required fields: full_name, email, birthday, gender, device_id',
+            message: 'Missing required fields: full_name, email, birthday, birth_time, gender, device_id',
             data: {},
         });
     }
@@ -58,6 +58,7 @@ exports.createUser = async (req, res) => {
             full_name,
             email,
             birthday,
+            birth_time,
             gender,
             device_id,
             device_info,
@@ -72,6 +73,15 @@ exports.createUser = async (req, res) => {
             data: newUser,
         });
     } catch (error) {
+        if (error.code === 'INVALID_BIRTH_DATA') {
+            return res.status(400).json({
+                status: 400,
+                error: 1,
+                message: 'Invalid birthday or birth_time',
+                data: {},
+            });
+        }
+
         if (error.code === 'DUPLICATE_EMAIL') {
             return res.status(409).json({
                 status: 409,
@@ -92,13 +102,13 @@ exports.createUser = async (req, res) => {
 };
 
 exports.updateUser = async (req, res) => {
-    const { user_id, full_name, email, birthday, gender, device_info, avatar_base64, firebase_token } = req.body;
+    const { user_id, full_name, email, birthday, birth_time, gender, device_info, avatar_base64, firebase_token } = req.body;
 
-    if (!user_id || !full_name || !email || !birthday || !gender) {
+    if (!user_id || !full_name || !email || !birthday || !birth_time || !gender) {
         return res.status(400).json({
             status: 400,
             error: 1,
-            message: 'Missing required fields: user_id, full_name, email, birthday, gender',
+            message: 'Missing required fields: user_id, full_name, email, birthday, birth_time, gender',
             data: {},
         });
     }
@@ -109,6 +119,7 @@ exports.updateUser = async (req, res) => {
             full_name,
             email,
             birthday,
+            birth_time,
             gender,
             device_info,
             avatar_base64,
@@ -122,6 +133,15 @@ exports.updateUser = async (req, res) => {
             data: updatedUser,
         });
     } catch (error) {
+        if (error.code === 'INVALID_BIRTH_DATA') {
+            return res.status(400).json({
+                status: 400,
+                error: 1,
+                message: 'Invalid birthday or birth_time',
+                data: {},
+            });
+        }
+
         if (error.code === 'DUPLICATE_EMAIL') {
             return res.status(409).json({
                 status: 409,
@@ -179,6 +199,15 @@ exports.getProfileDisplay = async (req, res) => {
                 status: 404,
                 error: 1,
                 message: 'User not found',
+                data: {},
+            });
+        }
+
+        if (!user.birth_time) {
+            return res.status(422).json({
+                status: 422,
+                error: 1,
+                message: 'User must provide birth_time before a Tử Vi chart can be calculated',
                 data: {},
             });
         }

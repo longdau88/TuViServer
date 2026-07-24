@@ -29,3 +29,14 @@ Cấu trúc dự án Node.js cơ bản với Express và MySQL.
 ## Biến môi trường
 
 Sử dụng `.env` để cấu hình cổng và thông tin MySQL.
+
+
+## pull code mới nhất từ GitHub về máy chủ Alwaysdata
+
+cd ~/www/TuViServer
+
+git pull origin main
+
+npm install
+
+Khởi động lại Server (Restart) Web -> Sites.

@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const solarlunar = require('solarlunar').default || require('solarlunar');
+const { generateLaSo } = require('tuvi-neo');
 
 const vietStemMap = {
     甲: 'Giáp',
@@ -78,6 +79,83 @@ const parseBirthdayDate = (birthday) => {
     return parseDateInput(birthday);
 };
 
+const normalizeBirthTime = (birthTime) => {
+    if (birthTime === null || birthTime === undefined) return null;
+
+    const trimmed = String(birthTime).trim();
+    if (!trimmed) return null;
+
+    const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(trimmed);
+    if (!match) return null;
+
+    const hour = Number(match[1]);
+    const minute = Number(match[2]);
+    const second = Number(match[3] || '0');
+
+    if (
+        Number.isNaN(hour)
+        || Number.isNaN(minute)
+        || Number.isNaN(second)
+        || hour < 0
+        || hour > 23
+        || minute < 0
+        || minute > 59
+        || second < 0
+        || second > 59
+    ) {
+        return null;
+    }
+
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+};
+
+const normalizeBirthTimeForDb = (birthTime) => {
+    const normalized = normalizeBirthTime(birthTime);
+    return normalized ? `${normalized}:00` : null;
+};
+
+const resolveBirthDateTime = (birthday, birthTime) => {
+    if (birthday instanceof Date) {
+        if (Number.isNaN(birthday.getTime())) return null;
+
+        return {
+            date: birthday,
+            normalizedBirthday: formatDateToYMD(birthday),
+            normalizedBirthTime: `${String(birthday.getHours()).padStart(2, '0')}:${String(birthday.getMinutes()).padStart(2, '0')}`,
+            year: birthday.getFullYear(),
+            month: birthday.getMonth() + 1,
+            day: birthday.getDate(),
+            hour: birthday.getHours(),
+            minute: birthday.getMinutes(),
+            hasTime: true,
+        };
+    }
+
+    const normalizedBirthday = normalizeBirthday(birthday);
+    if (!normalizedBirthday) return null;
+
+    const normalizedBirthTime = normalizeBirthTime(birthTime);
+    const [year, month, day] = normalizedBirthday.split('-').map(Number);
+    const [hour, minute] = normalizedBirthTime
+        ? normalizedBirthTime.split(':').map(Number)
+        : [0, 0];
+    const date = new Date(year, month - 1, day, hour, minute, 0, 0);
+
+    if (Number.isNaN(date.getTime())) return null;
+
+    return {
+        date,
+        normalizedBirthday,
+        normalizedBirthTime,
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        hasTime: Boolean(normalizedBirthTime),
+    };
+};
+
 const normalizeBirthday = (birthday) => {
     if (!birthday) return null;
     if (typeof birthday === 'string') {
@@ -91,7 +169,11 @@ const normalizeBirthday = (birthday) => {
 
 const removeVietnameseAccents = (str) => {
     if (!str) return '';
-    return str.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    return str
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D');
 };
 
 const reduceNumber = (num) => {
@@ -137,13 +219,15 @@ const toVietnameseCanChi = (gz) => {
     return `${stem} ${branch}`;
 };
 
-const buildCanChi = (birthday) => {
-    const parsed = parseBirthdayDate(birthday);
+const buildCanChi = (birthday, birthTime) => {
+    const parsed = resolveBirthDateTime(birthday, birthTime);
     if (!parsed) return null;
 
-    const { date, hasTime } = parsed;
+    const {
+        date, hasTime, hour: inputHour,
+    } = parsed;
     const lunar = solarlunar.solar2lunar(date.getFullYear(), date.getMonth() + 1, date.getDate());
-    const hour = hasTime ? getHourBranch(date.getHours()) : null;
+    const hour = hasTime ? getHourBranch(inputHour) : null;
 
     return {
         year: toVietnameseCanChi(lunar.gzYear),
@@ -363,32 +447,102 @@ const rotateArray = (arr, offset) => {
     return arr.slice(normalized).concat(arr.slice(0, normalized));
 };
 
-const buildTuViChart = (canChi, cungPhi, gender) => {
-    const houses = ['Mệnh', 'Phụ', 'Phúc', 'Điền', 'Quan', 'Nô', 'Di', 'Tật', 'Tài', 'Tử', 'Phu Thê', 'Huynh Đệ'];
-    const mainStars = ['Tử Vi', 'Thiên Phủ', 'Vũ Khúc', 'Thái Dương', 'Thái Âm', 'Thiên Cơ', 'Thiên Lương', 'Cự Môn', 'Liêm Trinh', 'Thiên Đồng', 'Thiên Hư', 'Thiên Khốc', 'Tham Lang', 'Phá Quân'];
+const palaceElementMap = {
+    2: 'Thủy',
+    3: 'Mộc',
+    4: 'Kim',
+    5: 'Thổ',
+    6: 'Hỏa',
+};
 
-    const stemNames = Object.values(vietStemMap);
-    const yearStem = canChi?.year?.split(' ')[0] || 'Giáp';
-    const stemIndex = stemNames.indexOf(yearStem);
-    const rotateIndex = stemIndex >= 0 ? stemIndex : 0;
-    const houseOrder = rotateArray(houses, rotateIndex);
+const normalizeGenderForTuVi = (gender) => (/^(female|f|nữ|nu)$/i.test(String(gender || '').trim()) ? 'female' : 'male');
 
-    const assignments = {};
-    houseOrder.forEach((house, index) => {
-        assignments[house] = {
-            main_star: mainStars[index] || mainStars[index % mainStars.length],
-            support_stars: [`Phụ tinh ${index + 1}`, `Phụ tinh ${index + 2}`],
-            note: `Vị trí ${house} mang lại năng lượng cho ${house.toLowerCase()} với sao ${mainStars[index] || mainStars[index % mainStars.length]}.`,
+const slugifyVietnamese = (value) => removeVietnameseAccents(String(value || ''))
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+const mapTuViStar = (star, loai) => ({
+    ten: star?.Name || '',
+    trang_thai: star?.Status || '',
+    loai,
+});
+
+const buildTuViChart = (fullName, birthday, birthTime, gender) => {
+    const birth = resolveBirthDateTime(birthday, birthTime);
+    if (!birth) return null;
+
+    const chart = generateLaSo({
+        name: fullName || 'Người dùng',
+        gender: normalizeGenderForTuVi(gender),
+        birth: {
+            isLunar: false,
+            year: birth.year,
+            month: birth.month,
+            day: birth.day,
+            hour: birth.hour,
+            minute: birth.minute,
+        },
+    });
+
+    const palaces = (chart.Cac_cung || []).map((palace, index) => {
+        const key = `${index + 1}_${slugifyVietnamese(palace.Name)}`;
+
+        return {
+            key,
+            ten_cung: String(palace.Name || '').toUpperCase(),
+            cung_goc: palace.Name || null,
+            dai_han: palace.SoCuc || null,
+            tieu_han: palace.TieuHan || null,
+            than: palace.Than === 1,
+            chinh_tinh: (palace.ChinhTinh || []).map((star) => mapTuViStar(star, 'binh')),
+            cat_tinh: (palace.Saotot || []).map((star) => mapTuViStar(star, 'tot')),
+            hung_tinh: (palace.Saoxau || []).map((star) => mapTuViStar(star, 'xau')),
+            an_ngu: [
+                palace.Tuan ? 'Tuần' : null,
+                palace.Triet ? 'Triệt' : null,
+            ].filter(Boolean).join(', ') || null,
+            vong_trang_sinh: palace.TrangSinh || null,
+            ngu_hanh_cung: palaceElementMap[palace.NguHanhCung] || null,
         };
     });
 
-    const summary = `Lá số Tử Vi chi tiết loại ${gender || 'Nam/Nữ'} dựa trên cung Phi ${cungPhi} và Can Chi ngày. Các sao chính được phân bổ theo 12 cung cơ bản.`;
+    const positions = {};
+    palaces.forEach((palace) => {
+        positions[palace.key] = palace;
+    });
+
+    const menhPalace = palaces[(chart.Info?.VTMenh || 1) - 1] || null;
+    const totalMainStars = palaces.reduce((sum, palace) => sum + palace.chinh_tinh.length, 0);
+    const totalSupportStars = palaces.reduce((sum, palace) => sum + palace.cat_tinh.length + palace.hung_tinh.length, 0);
+    const info = {
+        am_duong: chart.Info?.AmDuong || null,
+        gio_sinh_chi: chart.Info?.Gio || null,
+        nam_am_lich: chart.Info?.Nam || null,
+        thang_am_lich: chart.Info?.Thang || null,
+        ngay_am_lich: chart.Info?.Ngay || null,
+        cuc: chart.Info?.Cuc || null,
+        cuc_so: chart.Info?.CucNH || null,
+        chu_menh: chart.Info?.ChuMenh || null,
+        chu_than: chart.Info?.ChuThan || null,
+        than_cu: chart.Info?.ThanCu || null,
+        vi_tri_menh: chart.Info?.VTMenh || null,
+    };
+
+    const summaryParts = [
+        info.am_duong,
+        info.cuc,
+        info.than_cu,
+        menhPalace ? `Mệnh an tại cung ${menhPalace.cung_goc}` : null,
+    ].filter(Boolean);
 
     return {
-        positions: assignments,
-        total_main_stars: 14,
-        total_support_stars: 100,
-        summary,
+        info,
+        palaces,
+        positions,
+        total_main_stars: totalMainStars,
+        total_support_stars: totalSupportStars,
+        summary: summaryParts.join(' | '),
     };
 };
 
@@ -537,6 +691,29 @@ const getNapAmByCanChi = (canChi) => {
     return mapping[key] || null;
 };
 
+const getCucHoaBanMenh = (napAm, cuc) => {
+    if (!napAm || !cuc) return null;
+    const menhElement = napAm.split(' ').pop().toLowerCase();
+    const cucElement = cuc.split(' ')[0].toLowerCase();
+
+    const map = { 'kim': 'kim', 'mộc': 'moc', 'thủy': 'thuy', 'hỏa': 'hoa', 'thổ': 'tho' };
+    const m = map[menhElement];
+    const c = map[cucElement];
+
+    if (!m || !c) return null;
+    if (m === c) return 'Cục hòa Bản Mệnh';
+
+    const sinh = { 'kim': 'thuy', 'thuy': 'moc', 'moc': 'hoa', 'hoa': 'tho', 'tho': 'kim' };
+    const khac = { 'kim': 'moc', 'moc': 'tho', 'tho': 'thuy', 'thuy': 'hoa', 'hoa': 'kim' };
+
+    if (sinh[c] === m) return 'Cục sinh Bản Mệnh';
+    if (sinh[m] === c) return 'Bản Mệnh sinh Cục';
+    if (khac[c] === m) return 'Cục khắc Bản Mệnh';
+    if (khac[m] === c) return 'Bản Mệnh khắc Cục';
+
+    return null;
+};
+
 const formatLunarBirthDisplay = (birthday) => {
     const normalized = normalizeBirthday(birthday);
     if (!normalized) return null;
@@ -550,72 +727,18 @@ const formatLunarBirthDisplay = (birthday) => {
     }
 };
 
-const getBanMenhAndCuc = (user) => {
-    const canChi = buildCanChi(user.birthday);
+const getBanMenhAndCuc = (user, astro) => {
+    const canChi = buildCanChi(user.birthday, user.birth_time);
     const napAm = getNapAmByCanChi(canChi);
-    const dominantElement = user.astro_profile?.ngu_hanh_ten?.dominant || null;
-    const cuc = dominantElement ? `${dominantElement.charAt(0).toUpperCase() + dominantElement.slice(1)} tứ Cục` : null;
+    const cuc = astro?.tu_vi?.info?.cuc || null;
     return {
         ban_menh: napAm,
         cuc,
     };
 };
 
-const build12PalaceChart = (user) => {
-    const astro = user.astro_profile || {};
-    const tuViPositions = astro.tu_vi?.chart?.positions || {};
-    const positionDetails = Object.values(tuViPositions);
-
-    const palaceTemplates = [
-        { key: 'Ty', ten_cung: 'MỆNH', ngu_hanh_cung: 'Hỏa', an_ngu: null },
-        { key: 'Ngo', ten_cung: 'PHỤ MẪU', ngu_hanh_cung: 'Hỏa', an_ngu: 'Triệt' },
-        { key: 'Mui', ten_cung: 'PHÚC ĐỨC', ngu_hanh_cung: 'Thổ', an_ngu: 'Triệt' },
-        { key: 'Than', ten_cung: 'ĐIỀN TRẠCH', ngu_hanh_cung: 'Kim', an_ngu: null },
-        { key: 'Dau', ten_cung: 'QUAN LỘC', ngu_hanh_cung: 'Kim', an_ngu: null },
-        { key: 'Tuat', ten_cung: 'NÔ BỘC', ngu_hanh_cung: 'Thổ', an_ngu: 'Tuần' },
-        { key: 'Hoi', ten_cung: 'THIÊN DI', ngu_hanh_cung: 'Thủy', an_ngu: 'Tuần' },
-        { key: 'Than_At_Ach', ten_cung: 'TẬT ÁCH', ngu_hanh_cung: 'Thủy', an_ngu: null },
-        { key: 'Mui_Tai_Bach', ten_cung: 'TÀI BẠCH (THÂN)', ngu_hanh_cung: 'Thổ', an_ngu: null },
-        { key: 'Ngo_Tu_Tuc', ten_cung: 'TỬ TỨC', ngu_hanh_cung: 'Mộc', an_ngu: null },
-        { key: 'Ty_Phu_The', ten_cung: 'PHU THÊ', ngu_hanh_cung: 'Mộc', an_ngu: null },
-        { key: 'Thin', ten_cung: 'HUYNH ĐỆ', ngu_hanh_cung: 'Thổ', an_ngu: null },
-    ];
-
-    const vongTrangSinhSequence = [
-        'Tràng sinh',
-        'Mộc dục',
-        'Quan đới',
-        'Lâm quan',
-        'Đế vượng',
-        'Suy',
-        'Bệnh',
-        'Tử',
-        'Mộ',
-        'Tuyệt',
-        'Thai',
-        'Dưỡng',
-    ];
-
-    const chart = {};
-
-    palaceTemplates.forEach((template, index) => {
-        const detail = positionDetails[index] || {};
-        const mainStar = detail.main_star || null;
-        const supportStars = Array.isArray(detail.support_stars) ? detail.support_stars.filter(Boolean) : [];
-
-        chart[template.key] = {
-            ten_cung: template.ten_cung,
-            dai_han: 4 + index * 10,
-            chinh_tinh: mainStar ? [{ ten: mainStar, trang_thai: '', loai: 'binh' }] : [],
-            cat_tinh: supportStars,
-            hung_tinh: [],
-            an_ngu: template.an_ngu,
-            vong_trang_sinh: vongTrangSinhSequence[index],
-            ngu_hanh_cung: template.ngu_hanh_cung,
-        };
-    });
-
-    return chart;
+const build12PalaceChart = (astro) => {
+    return astro?.tu_vi?.chart?.positions || {};
 };
 
 const calculateAge = (birthday) => {
@@ -640,28 +763,34 @@ const calculateAge = (birthday) => {
 const buildClientDisplayData = (user) => {
     if (!user) return null;
 
-    const astro = user.astro_profile || {};
-    const canChiBirth = buildCanChi(user.birthday);
+    const astro = buildAstroProfile(user.full_name, user.birthday, user.birth_time, user.gender) || user.astro_profile || {};
+    const canChiBirth = buildCanChi(user.birthday, user.birth_time);
     const currentYearLabel = getCurrentYearLabel();
     const namXemYearCanChi = currentYearLabel.match(/\(([^)]+)\)/)?.[1] || null;
-    const banMenhAndCuc = getBanMenhAndCuc(user);
-    const palaces = build12PalaceChart(user);
+    const banMenhAndCuc = getBanMenhAndCuc(user, astro);
+    const palaces = build12PalaceChart(astro);
     const canChiString = buildChiTietAmLich(canChiBirth);
     const lunarBirth = formatLunarBirthDisplay(user.birthday);
     const fullLunarBirth = convertToLunar(user.birthday);
+    const tuViInfo = astro.tu_vi?.info || {};
+    const chartSummary = astro.tu_vi?.chart?.summary || getBirthChartSummary(astro.so_chu_dao, astro.ngu_hanh_ten);
+    const normalizedBirthTime = normalizeBirthTime(user.birth_time);
 
     return {
         thong_tin_trung_tam: {
             nam_xem: currentYearLabel,
             ngay_sinh_duong: user.birthday ? formatDateToYMD(user.birthday) : null,
+            gio_sinh: normalizedBirthTime,
             ngay_sinh_am: lunarBirth,
             chi_tiet_am_lich: canChiString,
             tuoi: getTuoiLabel(user.gender, canChiBirth),
             ban_menh: banMenhAndCuc.ban_menh,
             cuc: banMenhAndCuc.cuc,
-            menh_chu: astro.tu_vi?.chart?.positions ? Object.values(astro.tu_vi.chart.positions)[0]?.main_star || null : null,
-            than_chu: astro.tu_vi?.chart?.positions ? Object.values(astro.tu_vi.chart.positions)[1]?.main_star || null : null,
-            cuc_hoa_ban_menh: banMenhAndCuc.ban_menh && banMenhAndCuc.cuc ? 'Cục hòa Bản Mệnh' : null,
+            menh_chu: tuViInfo.chu_menh || null,
+            than_chu: tuViInfo.chu_than || null,
+            than_cu: tuViInfo.than_cu || null,
+            gio_sinh_can_chi: tuViInfo.gio_sinh_chi || canChiBirth?.hour || null,
+            cuc_hoa_ban_menh: getCucHoaBanMenh(banMenhAndCuc.ban_menh, banMenhAndCuc.cuc),
             don_vi_cap: 'Thăng long đạo quán VN',
         },
         la_so_12_cung: palaces,
@@ -675,13 +804,15 @@ const buildClientDisplayData = (user) => {
             avatar_url: user.avatar_url || user.avatar_base64 || null,
             gender: user.gender || null,
             birthday: user.birthday ? formatDateToYMD(user.birthday) : null,
+            birth_time: normalizedBirthTime,
             lunar_birth: fullLunarBirth,
             can_chi: astro.can_chi || buildCanChiString(canChiBirth),
             cung_phi: astro.cung_phi || null,
             life_path: astro.so_chu_dao || null,
             expression: astro.chi_so_su_menh || null,
             soul: astro.chi_so_linh_hon || null,
-            summary: getBirthChartSummary(astro.so_chu_dao, astro.ngu_hanh_ten),
+            summary: chartSummary,
+            nam_xem_can_chi: namXemYearCanChi,
         },
     };
 };
@@ -736,6 +867,7 @@ const formatUserRow = (row) => {
         email: row.email,
         birthday: row.birthday ? formatDateToYMD(row.birthday) : null,
         lunar_birth,
+        birth_time: normalizeBirthTime(row.birth_time) || "",
         gender: row.gender || null,
         device_id: row.device_id || null,
         device_info: row.device_info || null,
@@ -848,6 +980,7 @@ const createUsersTable = async () => {
       full_name VARCHAR(255) NOT NULL,
       email VARCHAR(255) NOT NULL UNIQUE,
       birthday DATE NULL,
+      birth_time TIME NULL,
       gender VARCHAR(50) NULL,
       device_id VARCHAR(255) NULL,
       device_info TEXT NULL,
@@ -872,6 +1005,12 @@ const createUsersTable = async () => {
     if (avatarColumns.length === 0) {
         await pool.query('ALTER TABLE users ADD COLUMN avatar_base64 LONGTEXT NULL AFTER device_info');
         console.log('[DB] Added missing column: users.avatar_base64');
+    }
+
+    const [birthTimeColumns] = await pool.query("SHOW COLUMNS FROM users LIKE 'birth_time'");
+    if (birthTimeColumns.length === 0) {
+        await pool.query('ALTER TABLE users ADD COLUMN birth_time TIME NULL AFTER birthday');
+        console.log('[DB] Added missing column: users.birth_time');
     }
 
     const sqlAstro = `
@@ -933,7 +1072,7 @@ const createUsersTable = async () => {
 
 const findUserByDeviceId = async (deviceId) => {
     const sql = `
-        SELECT u.id, u.full_name, u.email, u.birthday, u.gender,
+        SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,
              u.device_id, u.device_info, u.avatar_base64, u.firebase_token, u.user_code, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
@@ -948,7 +1087,7 @@ const findUserByDeviceId = async (deviceId) => {
 
 const findUserById = async (userId) => {
     const sql = `
-        SELECT u.id, u.full_name, u.email, u.birthday, u.gender,
+        SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,
              u.device_id, u.device_info, u.avatar_base64, u.firebase_token, u.user_code, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
@@ -963,7 +1102,7 @@ const findUserById = async (userId) => {
 
 const findUserByEmail = async (email) => {
     const sql = `
-        SELECT u.id, u.full_name, u.email, u.birthday, u.gender,
+        SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,  
              u.device_id, u.device_info, u.avatar_base64, u.firebase_token, u.user_code, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
@@ -980,6 +1119,13 @@ const createDuplicateEmailError = (email) => {
     const error = new Error(`Email already exists: ${email}`);
     error.code = 'DUPLICATE_EMAIL';
     error.status = 409;
+    return error;
+};
+
+const createInvalidBirthDataError = (message) => {
+    const error = new Error(message);
+    error.code = 'INVALID_BIRTH_DATA';
+    error.status = 400;
     return error;
 };
 
@@ -1011,9 +1157,9 @@ const convertToLunar = (birthday) => {
         return null;
     }
 };
-const buildAstroProfile = (fullName, birthday, gender) => {
+const buildAstroProfile = (fullName, birthday, birthTime, gender) => {
     const lunarBirth = convertToLunar(birthday);
-    const canChi = buildCanChi(birthday);
+    const canChi = buildCanChi(birthday, birthTime);
     const lifePath = calculateLifePathNumber(birthday);
     const expression = calculateExpressionNumber(fullName);
     const soul = calculateSoulNumber(fullName);
@@ -1025,10 +1171,12 @@ const buildAstroProfile = (fullName, birthday, gender) => {
     const nameElement = calculateNameElement(fullName);
     const strokeNumbers = calculateStrokeNumbers(fullName);
     const tuTruInfo = getTuTruInfo(canChi);
-    const tuViChart = buildTuViChart(canChi, cungPhi, gender);
+    const tuViChart = buildTuViChart(fullName, birthday, birthTime, gender);
 
     return {
-        can_chi: canChi,
+        can_chi: buildCanChiString(canChi),
+        can_chi_raw: canChi,
+        birth_time: normalizeBirthTime(birthTime),
         tu_tru: {
             description: 'Tứ trụ dựa vào Năm, Tháng, Ngày, Giờ theo Can Chi. Phân tích cân bằng Ngũ hành, dụng thần và kỵ thần.',
             detail: tuTruInfo,
@@ -1038,7 +1186,8 @@ const buildAstroProfile = (fullName, birthday, gender) => {
             hour: canChi?.raw?.hour || null,
         },
         tu_vi: {
-            description: 'Lá số Tử Vi phân bổ 14 chính tinh và các phụ tinh trên 12 cung theo cung phi và Can Chi.',
+            description: 'Lá số Tử Vi được tính động theo ngày sinh, giờ sinh và giới tính của user.',
+            info: tuViChart?.info || null,
             chart: tuViChart,
         },
         cung_phi: cungPhi,
@@ -1054,16 +1203,21 @@ const buildAstroProfile = (fullName, birthday, gender) => {
 };
 
 const createUser = async (userData) => {
-    const { full_name, email, birthday, gender, device_id, device_info, avatar_base64, firebase_token } = userData;
+    const { full_name, email, birthday, birth_time, gender, device_id, device_info, avatar_base64, firebase_token } = userData;
     const normalizedEmail = String(email).trim();
+    const normalizedBirthdayTime = normalizeBirthTimeForDb(birth_time);
     const normalizedBirthday = normalizeBirthday(birthday);
-    const astroProfile = buildAstroProfile(full_name, normalizedBirthday, gender);
-    const can_chi = buildCanChi(normalizedBirthday);
-    const canChiString = buildCanChiString(can_chi);
+    if (!normalizedBirthday || !normalizedBirthdayTime) {
+        throw createInvalidBirthDataError('Invalid birthday or birth_time');
+    }
+    const astroProfile = buildAstroProfile(full_name, normalizedBirthday, normalizedBirthdayTime, gender);
+    const canChiString = astroProfile.can_chi;
     const cung_phi = astroProfile.cung_phi;
     const normalizedAvatarBase64 = extractAvatarBase64(avatar_base64);
 
     const existingUser = await findUserByDeviceId(device_id);
+
+    const normalized_user_code = generateUserCode();
 
     if (existingUser) {
         const existingEmailUser = await findUserByEmail(normalizedEmail);
@@ -1076,6 +1230,7 @@ const createUser = async (userData) => {
             SET full_name = ?,
                 email = ?,
                 birthday = ?,
+                birth_time = ?,
                 gender = ?,
                 device_info = ?,
                 avatar_base64 = COALESCE(?, avatar_base64),
@@ -1086,6 +1241,7 @@ const createUser = async (userData) => {
             full_name,
             normalizedEmail,
             normalizedBirthday,
+            normalizedBirthdayTime,
             gender,
             device_info,
             normalizedAvatarBase64,
@@ -1126,22 +1282,21 @@ const createUser = async (userData) => {
         throw createDuplicateEmailError(normalizedEmail);
     }
 
-    const user_code = generateUserCode();
-
     const sql = `
-        INSERT INTO users (full_name, email, birthday, gender, device_id, device_info, avatar_base64, firebase_token, user_code)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO users (full_name, email, birthday, birth_time, gender, device_id, device_info, avatar_base64, firebase_token, user_code)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
         full_name,
         normalizedEmail,
         normalizedBirthday,
+        normalizedBirthdayTime,
         gender,
         device_id,
         device_info,
         normalizedAvatarBase64,
         firebase_token,
-        user_code,
+        normalized_user_code,
     ];
 
     let result;
@@ -1174,7 +1329,9 @@ const createUser = async (userData) => {
 };
 
 const updateUser = async (userData) => {
-    const { user_id, full_name, email, birthday, gender, device_info, avatar_base64, firebase_token } = userData;
+    const {
+        user_id, full_name, email, birthday, birth_time, gender, device_info, avatar_base64, firebase_token,
+    } = userData;
     const userId = Number(user_id);
 
     if (!userId || Number.isNaN(userId) || userId <= 0) {
@@ -1194,10 +1351,13 @@ const updateUser = async (userData) => {
 
     const normalizedEmail = String(email).trim();
     const normalizedBirthday = normalizeBirthday(birthday);
+    const normalizedBirthTime = normalizeBirthTimeForDb(birth_time);
+    if (!normalizedBirthday || !normalizedBirthTime) {
+        throw createInvalidBirthDataError('Invalid birthday or birth_time');
+    }
     const normalizedAvatarBase64 = extractAvatarBase64(avatar_base64);
-    const astroProfile = buildAstroProfile(full_name, normalizedBirthday, gender);
-    const can_chi = buildCanChi(normalizedBirthday);
-    const canChiString = buildCanChiString(can_chi);
+    const astroProfile = buildAstroProfile(full_name, normalizedBirthday, normalizedBirthTime, gender);
+    const canChiString = astroProfile.can_chi;
     const cung_phi = astroProfile.cung_phi;
 
     const existingEmailUser = await findUserByEmail(normalizedEmail);
@@ -1210,6 +1370,7 @@ const updateUser = async (userData) => {
         SET full_name = ?,
             email = ?,
             birthday = ?,
+            birth_time = ?,
             gender = ?,
             device_info = ?,
             avatar_base64 = COALESCE(?, avatar_base64),
@@ -1220,6 +1381,7 @@ const updateUser = async (userData) => {
         full_name,
         normalizedEmail,
         normalizedBirthday,
+        normalizedBirthTime,
         gender,
         device_info,
         normalizedAvatarBase64,

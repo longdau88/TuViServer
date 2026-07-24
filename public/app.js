@@ -16,6 +16,7 @@ const avatarFallback = document.getElementById('avatarFallback');
 const fullName = document.getElementById('fullName');
 const subtitle = document.getElementById('subtitle');
 const solarBirth = document.getElementById('solarBirth');
+const birthTimeLabel = document.getElementById('birthTimeLabel');
 const lunarBirth = document.getElementById('lunarBirth');
 const ageLabel = document.getElementById('ageLabel');
 const canChiLabel = document.getElementById('canChiLabel');
@@ -36,6 +37,7 @@ const createAvatarPreview = document.getElementById('createAvatarPreview');
 const createFullName = document.getElementById('createFullName');
 const createEmail = document.getElementById('createEmail');
 const createBirthday = document.getElementById('createBirthday');
+const createBirthTime = document.getElementById('createBirthTime');
 const createGender = document.getElementById('createGender');
 
 let createAvatarBase64 = null;
@@ -112,6 +114,8 @@ const renderChips = (data) => {
         ['Cung', data.thong_tin_trung_tam?.cuc],
         ['Mệnh chủ', data.thong_tin_trung_tam?.menh_chu],
         ['Thân chủ', data.thong_tin_trung_tam?.than_chu],
+        ['Thân cư', data.thong_tin_trung_tam?.than_cu],
+        ['Giờ sinh âm', data.thong_tin_trung_tam?.gio_sinh_can_chi],
         ['Cục hòa Bản Mệnh', data.thong_tin_trung_tam?.cuc_hoa_ban_menh],
         ['Đơn vị cấp', data.thong_tin_trung_tam?.don_vi_cap],
     ].filter(([, value]) => value);
@@ -134,12 +138,11 @@ const renderStars = (container, items) => {
 const renderPalaces = (palaces) => {
     palaceGrid.innerHTML = '';
 
-    palaceOrder.forEach((key) => {
-        const palace = palaces?.[key];
+    Object.values(palaces || {}).forEach((palace) => {
         if (!palace) return;
 
         const node = palaceTemplate.content.cloneNode(true);
-        node.querySelector('.palace-name').textContent = palace.ten_cung || key;
+        node.querySelector('.palace-name').textContent = palace.ten_cung || palace.cung_goc || '-';
         node.querySelector('.palace-age').textContent = palace.dai_han ? `Đại hạn ${palace.dai_han}` : '';
         node.querySelector('.palace-vong').textContent = palace.vong_trang_sinh ? `Vòng ${palace.vong_trang_sinh}` : '';
         node.querySelector('.palace-element').textContent = palace.ngu_hanh_cung ? `Ngũ hành ${palace.ngu_hanh_cung}` : '';
@@ -155,10 +158,16 @@ const renderPalaces = (palaces) => {
 const renderData = (payload) => {
     const center = payload.thong_tin_trung_tam || {};
     const meta = payload.meta || {};
+    const subtitleParts = [
+        center.ngay_sinh_duong || '-',
+        center.gio_sinh || null,
+        center.ngay_sinh_am || '-',
+    ].filter(Boolean);
 
     fullName.textContent = meta.full_name || '-';
-    subtitle.textContent = `${center.ngay_sinh_duong || '-'} · ${center.ngay_sinh_am || '-'}`;
+    subtitle.textContent = subtitleParts.join(' · ');
     solarBirth.textContent = center.ngay_sinh_duong || '-';
+    birthTimeLabel.textContent = center.gio_sinh || '-';
     lunarBirth.textContent = center.ngay_sinh_am || '-';
     ageLabel.textContent = center.tuoi || '-';
     canChiLabel.textContent = center.chi_tiet_am_lich || '-';
@@ -231,7 +240,10 @@ const loadUserChart = async () => {
     const payload = await readJsonResponse(response);
 
     if (!response.ok || payload.error) {
-        throw new Error(payload.message || 'Không thể tải lá số');
+        const error = new Error(payload.message || 'Không thể tải lá số');
+        error.status = response.status;
+        error.payload = payload;
+        throw error;
     }
 
     renderData(payload.data);
@@ -277,6 +289,7 @@ const fillCreateFormFromUser = (user) => {
     createFullName.value = user.full_name || '';
     createEmail.value = user.email || '';
     createBirthday.value = user.birthday || '';
+    createBirthTime.value = user.birth_time || '';
     createGender.value = /^(female|f|nữ|nu)$/i.test(String(user.gender || '').trim()) ? 'female' : 'male';
     createAvatarFile.value = '';
     createAvatarBase64 = null;
@@ -384,9 +397,10 @@ const submitCreateUser = async (event) => {
     const full_name = createFullName.value.trim();
     const email = createEmail.value.trim();
     const birthday = createBirthday.value.trim();
+    const birth_time = createBirthTime.value.trim();
     const gender = createGender.value;
 
-    if (!full_name || !email || !birthday || !gender) {
+    if (!full_name || !email || !birthday || !birth_time || !gender) {
         setCreateStatus('Vui lòng nhập đầy đủ thông tin.', true);
         return;
     }
@@ -400,6 +414,7 @@ const submitCreateUser = async (event) => {
             full_name,
             email,
             birthday,
+            birth_time,
             gender,
             device_id: state.deviceId,
             device_info: createDeviceInfo(),
@@ -436,8 +451,27 @@ const bootstrapApp = async () => {
         state.user = await checkExistingUser();
 
         if (state.user) {
-            await loadUserChart();
-            showMain();
+            if (!state.user.birth_time) {
+                fillCreateFormFromUser(state.user);
+                setCreateStatus('User hiện tại chưa có giờ sinh. Vui lòng bổ sung để hệ thống tính lá số tử vi.');
+                showCreate();
+                return;
+            }
+
+            try {
+                await loadUserChart();
+                showMain();
+            } catch (error) {
+                if (error.status === 422) {
+                    fillCreateFormFromUser(state.user);
+                    setCreateStatus('User hiện tại thiếu giờ sinh hoặc dữ liệu tử vi chưa đủ. Vui lòng cập nhật lại thông tin.');
+                    showCreate();
+                    return;
+                }
+
+                throw error;
+            }
+
             return;
         }
 
