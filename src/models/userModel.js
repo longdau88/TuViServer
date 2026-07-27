@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const cacheService = require('../services/cacheService');
 const userCache = require('../services/userCache');
+const avatarService = require('../services/avatarService');
 const solarlunar = require('solarlunar').default || require('solarlunar');
 const { generateLaSo } = require('tuvi-neo');
 
@@ -610,9 +611,9 @@ const extractAvatarUrl = (deviceInfo) => {
     return avatarCandidates.find((candidate) => typeof candidate === 'string' && candidate.trim())?.trim() || null;
 };
 
-const extractAvatarBase64 = (avatarBase64) => {
-    if (!avatarBase64 || typeof avatarBase64 !== 'string') return null;
-    const trimmed = avatarBase64.trim();
+const normalizeStoredAvatarUrl = (avatarUrl) => {
+    if (!avatarUrl || typeof avatarUrl !== 'string') return null;
+    const trimmed = avatarUrl.trim();
     return trimmed.length > 0 ? trimmed : null;
 };
 
@@ -814,11 +815,7 @@ const buildClientDisplayData = (user) => {
         meta: {
             user_id: user.id,
             full_name: user.full_name,
-            // The web profile renders the avatar from this display payload.
-            // Prefer the image stored in users.avatar_base64, then fall back to
-            // an avatar URL that may have been supplied in device_info.
-            avatar_base64: user.avatar_base64 || null,
-            avatar_url: user.avatar_url || user.avatar_base64 || null,
+            avatar_url: user.avatar_url || extractAvatarUrl(user.device_info_parsed) || null,
             gender: user.gender || null,
             birthday: user.birthday ? formatDateToYMD(user.birthday) : null,
             birth_time: normalizedBirthTime,
@@ -838,7 +835,7 @@ const formatUserRow = (row) => {
     if (!row) return null;
     const lunar_birth = convertToLunar(row.birthday);
     const deviceInfoParsed = parseJsonMaybe(row.device_info);
-    const avatarBase64 = extractAvatarBase64(row.avatar_base64);
+    const avatarUrl = normalizeStoredAvatarUrl(row.avatar_url) || extractAvatarUrl(deviceInfoParsed);
     let tu_tru = null;
     if (row.tu_tru) {
         tu_tru = parseJsonMaybe(row.tu_tru);
@@ -889,8 +886,7 @@ const formatUserRow = (row) => {
         device_id: row.device_id || null,
         device_info: row.device_info || null,
         device_info_parsed: deviceInfoParsed,
-        avatar_base64: avatarBase64,
-        avatar_url: avatarBase64 || extractAvatarUrl(deviceInfoParsed),
+        avatar_url: avatarUrl,
         firebase_token: row.firebase_token || null,
         user_code: row.user_code || null,
         created_at: row.created_at,
@@ -1001,7 +997,7 @@ const createUsersTable = async () => {
       gender VARCHAR(50) NULL,
       device_id VARCHAR(255) NULL,
       device_info TEXT NULL,
-    avatar_base64 LONGTEXT NULL,
+      avatar_url VARCHAR(512) NULL,
       firebase_token TEXT NULL,
       user_code VARCHAR(100) NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -1018,10 +1014,16 @@ const createUsersTable = async () => {
         'CREATE INDEX idx_users_device_id ON users (device_id)',
     );
 
-    const [avatarColumns] = await pool.query("SHOW COLUMNS FROM users LIKE 'avatar_base64'");
-    if (avatarColumns.length === 0) {
-        await pool.query('ALTER TABLE users ADD COLUMN avatar_base64 LONGTEXT NULL AFTER device_info');
-        console.log('[DB] Added missing column: users.avatar_base64');
+    const [avatarUrlColumns] = await pool.query("SHOW COLUMNS FROM users LIKE 'avatar_url'");
+    if (avatarUrlColumns.length === 0) {
+        await pool.query('ALTER TABLE users ADD COLUMN avatar_url VARCHAR(512) NULL AFTER device_info');
+        console.log('[DB] Added missing column: users.avatar_url');
+    }
+
+    const [avatarBase64Columns] = await pool.query("SHOW COLUMNS FROM users LIKE 'avatar_base64'");
+    if (avatarBase64Columns.length > 0) {
+        await pool.query('ALTER TABLE users DROP COLUMN avatar_base64');
+        console.log('[DB] Dropped deprecated column: users.avatar_base64');
     }
 
     const [birthTimeColumns] = await pool.query("SHOW COLUMNS FROM users LIKE 'birth_time'");
@@ -1068,7 +1070,6 @@ const createUsersTable = async () => {
         { name: 'bieu_do_ngay_sinh', type: 'TEXT NULL' },
         { name: 'ngu_hanh_ten', type: 'TEXT NULL' },
         { name: 'so_net', type: 'TEXT NULL' },
-        { name: 'avatar_base64', type: 'LONGTEXT NULL' },
     ];
 
     for (const col of newColumns) {
@@ -1090,7 +1091,7 @@ const createUsersTable = async () => {
 const findUserByDeviceIdFromDb = async (deviceId) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,
-             u.device_id, u.device_info, u.avatar_base64, u.firebase_token, u.user_code, u.created_at, u.updated_at,
+             u.device_id, u.device_info, u.avatar_url, u.firebase_token, u.user_code, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
         FROM users u
@@ -1120,7 +1121,7 @@ const findUserByDeviceId = async (deviceId) => {
 const findUserByIdFromDb = async (userId) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,
-             u.device_id, u.device_info, u.avatar_base64, u.firebase_token, u.user_code, u.created_at, u.updated_at,
+             u.device_id, u.device_info, u.avatar_url, u.firebase_token, u.user_code, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
         FROM users u
@@ -1150,7 +1151,7 @@ const findUserById = async (userId) => {
 const findUserByEmail = async (email) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,  
-             u.device_id, u.device_info, u.avatar_base64, u.firebase_token, u.user_code, u.created_at, u.updated_at,
+             u.device_id, u.device_info, u.avatar_url, u.firebase_token, u.user_code, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
         FROM users u
@@ -1250,7 +1251,10 @@ const buildAstroProfile = (fullName, birthday, birthTime, gender) => {
 };
 
 const createUser = async (userData) => {
-    const { full_name, email, birthday, birth_time, gender, device_id, device_info, avatar_base64, firebase_token } = userData;
+    const {
+        full_name, email, birthday, birth_time, gender, device_id, device_info,
+        avatar_base64, avatar_url, firebase_token,
+    } = userData;
     const normalizedEmail = String(email).trim();
     const normalizedBirthdayTime = normalizeBirthTimeForDb(birth_time);
     const normalizedBirthday = normalizeBirthday(birthday);
@@ -1260,9 +1264,16 @@ const createUser = async (userData) => {
     const astroProfile = buildAstroProfile(full_name, normalizedBirthday, normalizedBirthdayTime, gender);
     const canChiString = astroProfile.can_chi;
     const cung_phi = astroProfile.cung_phi;
-    const normalizedAvatarBase64 = extractAvatarBase64(avatar_base64);
 
     const existingUser = await findUserByDeviceIdFromDb(device_id);
+
+    const resolvedAvatarUrl = await avatarService.resolveAvatarUrl({
+        avatar_base64,
+        avatar_url,
+        existingAvatarUrl: existingUser?.avatar_url,
+        isUpdate: Boolean(existingUser),
+        userId: existingUser?.id,
+    });
 
     const normalized_user_code = generateUserCode();
 
@@ -1280,7 +1291,7 @@ const createUser = async (userData) => {
                 birth_time = ?,
                 gender = ?,
                 device_info = ?,
-                avatar_base64 = COALESCE(?, avatar_base64),
+                avatar_url = COALESCE(?, avatar_url),
                 firebase_token = ?
             WHERE device_id = ?
         `;
@@ -1291,7 +1302,7 @@ const createUser = async (userData) => {
             normalizedBirthdayTime,
             gender,
             device_info,
-            normalizedAvatarBase64,
+            resolvedAvatarUrl === undefined ? null : resolvedAvatarUrl,
             firebase_token,
             device_id,
         ];
@@ -1331,7 +1342,7 @@ const createUser = async (userData) => {
     }
 
     const sql = `
-        INSERT INTO users (full_name, email, birthday, birth_time, gender, device_id, device_info, avatar_base64, firebase_token, user_code)
+        INSERT INTO users (full_name, email, birthday, birth_time, gender, device_id, device_info, avatar_url, firebase_token, user_code)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
@@ -1342,7 +1353,7 @@ const createUser = async (userData) => {
         gender,
         device_id,
         device_info,
-        normalizedAvatarBase64,
+        resolvedAvatarUrl,
         firebase_token,
         normalized_user_code,
     ];
@@ -1379,7 +1390,8 @@ const createUser = async (userData) => {
 
 const updateUser = async (userData) => {
     const {
-        user_id, full_name, email, birthday, birth_time, gender, device_info, avatar_base64, firebase_token,
+        user_id, full_name, email, birthday, birth_time, gender, device_info,
+        avatar_base64, avatar_url, firebase_token,
     } = userData;
     const userId = Number(user_id);
 
@@ -1404,7 +1416,15 @@ const updateUser = async (userData) => {
     if (!normalizedBirthday || !normalizedBirthTime) {
         throw createInvalidBirthDataError('Invalid birthday or birth_time');
     }
-    const normalizedAvatarBase64 = extractAvatarBase64(avatar_base64);
+
+    const resolvedAvatarUrl = await avatarService.resolveAvatarUrl({
+        avatar_base64,
+        avatar_url,
+        existingAvatarUrl: existingUser.avatar_url,
+        isUpdate: true,
+        userId,
+    });
+
     const astroProfile = buildAstroProfile(full_name, normalizedBirthday, normalizedBirthTime, gender);
     const canChiString = astroProfile.can_chi;
     const cung_phi = astroProfile.cung_phi;
@@ -1422,7 +1442,7 @@ const updateUser = async (userData) => {
             birth_time = ?,
             gender = ?,
             device_info = ?,
-            avatar_base64 = COALESCE(?, avatar_base64),
+            avatar_url = COALESCE(?, avatar_url),
             firebase_token = ?
         WHERE id = ?
     `;
@@ -1433,7 +1453,7 @@ const updateUser = async (userData) => {
         normalizedBirthTime,
         gender,
         device_info,
-        normalizedAvatarBase64,
+        resolvedAvatarUrl === undefined ? null : resolvedAvatarUrl,
         firebase_token,
         userId,
     ];

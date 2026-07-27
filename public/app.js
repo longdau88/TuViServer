@@ -294,7 +294,7 @@ const fillCreateFormFromUser = (user) => {
     createAvatarFile.value = '';
     createAvatarBase64 = null;
 
-    const existingAvatar = normalizeAvatarSource(user.avatar_base64 || user.avatar_url || null);
+    const existingAvatar = normalizeAvatarSource(user.avatar_url || null);
     updateAvatarPreview(existingAvatar, existingAvatar ? 'Ảnh hiện tại' : null);
     setFormMode('edit');
 }
@@ -418,7 +418,7 @@ const submitCreateUser = async (event) => {
             gender,
             device_id: state.deviceId,
             device_info: createDeviceInfo(),
-            avatar_base64: createAvatarBase64,
+            ...(createAvatarBase64 ? { avatar_base64: createAvatarBase64 } : {}),
             firebase_token: null,
         });
 

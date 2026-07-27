@@ -62,8 +62,23 @@ const authLimiter = rateLimit({
     },
 });
 
+const writeLimiter = rateLimit({
+    windowMs: Number(process.env.RATE_LIMIT_WRITE_WINDOW_MS) || 15 * 60 * 1000,
+    limit: Number(process.env.RATE_LIMIT_WRITE_MAX) || 20,
+    standardHeaders,
+    legacyHeaders,
+    store: createStore('write'),
+    message: {
+        status: 429,
+        error: 1,
+        message: 'Too many write requests, please try again later',
+        data: {},
+    },
+});
+
 module.exports = {
     apiLimiter,
     heavyReadLimiter,
     authLimiter,
+    writeLimiter,
 };

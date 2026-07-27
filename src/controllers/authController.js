@@ -1,15 +1,21 @@
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
+const { safeEqual } = require('../utils/secureCompare');
+const { isProduction } = require('../config/security');
 
 dotenv.config();
 
 const tokenSecret = process.env.JWT_SECRET;
 const tokenExpiresIn = Number(process.env.TOKEN_EXPIRES_IN || '1292400');
-const authUsername = process.env.AUTH_USERNAME;
-const authPassword = process.env.AUTH_PASSWORD;
+const authUsername = process.env.AUTH_USERNAME || '';
+const authPassword = process.env.AUTH_PASSWORD || '';
 
 if (!tokenSecret) {
     throw new Error('JWT_SECRET must be set in .env');
+}
+
+if (isProduction() && (!authUsername || !authPassword)) {
+    throw new Error('AUTH_USERNAME and AUTH_PASSWORD must be set in production');
 }
 
 const signAccessToken = (subject) => jwt.sign(
@@ -20,6 +26,7 @@ const signAccessToken = (subject) => jwt.sign(
     tokenSecret,
     {
         expiresIn: tokenExpiresIn,
+        algorithm: 'HS256',
     },
 );
 
@@ -31,10 +38,13 @@ exports.getToken = (req, res) => {
     }
 
     if (!username || !password) {
-        return res.status(400).json({ error: 'invalid_request', error_description: 'username and password are required' });
+        return res.status(400).json({
+            error: 'invalid_request',
+            error_description: 'username and password are required',
+        });
     }
 
-    if (username !== authUsername || password !== authPassword) {
+    if (!safeEqual(String(username), authUsername) || !safeEqual(String(password), authPassword)) {
         return res.status(401).json({ error: 'invalid_client' });
     }
 

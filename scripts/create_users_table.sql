@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   gender VARCHAR(50) NULL,
   device_id VARCHAR(255) NULL,
   device_info TEXT NULL,
+  avatar_url VARCHAR(512) NULL,
   firebase_token TEXT NULL,
   user_code VARCHAR(100) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -30,6 +30,17 @@ Cấu trúc dự án Node.js cơ bản với Express và MySQL.
 
 Sử dụng `.env` để cấu hình cổng, MySQL, Redis và rate limit. Xem mẫu tại `.env.example`.
 
+### ImgBB (avatar)
+
+Ảnh avatar được upload lên [ImgBB](https://api.imgbb.com/) và lưu URL vào `users.avatar_url`.
+
+Trong `.env`:
+```env
+IMGBB_API_KEY=your_api_key
+```
+
+API create/update vẫn chấp nhận `avatar_base64` (data URL hoặc base64 thuần) hoặc `avatar_url` (URL ảnh). Server sẽ upload lên ImgBB và lưu URL trả về.
+
 ### Redis & cache (khuyến nghị production)
 
 1. Chạy Redis local: `docker compose up -d redis`

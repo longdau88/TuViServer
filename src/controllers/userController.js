@@ -41,7 +41,7 @@ exports.checkDeviceId = async (req, res) => {
 };
 
 exports.createUser = async (req, res) => {
-    const { user_id, full_name, email, birthday, birth_time, gender, device_id, device_info, avatar_base64, firebase_token } = req.body;
+    const { user_id, full_name, email, birthday, birth_time, gender, device_id, device_info, avatar_base64, avatar_url, firebase_token } = req.body;
 
     if (user_id) {
         return exports.updateUser(req, res);
@@ -66,6 +66,7 @@ exports.createUser = async (req, res) => {
             device_id,
             device_info,
             avatar_base64,
+            avatar_url,
             firebase_token,
         });
 
@@ -94,6 +95,24 @@ exports.createUser = async (req, res) => {
             });
         }
 
+        if (error.code === 'AVATAR_UPLOAD_FAILED') {
+            return res.status(error.status || 502).json({
+                status: error.status || 502,
+                error: 1,
+                message: error.message || 'Failed to upload avatar',
+                data: {},
+            });
+        }
+
+        if (error.code === 'IMGBB_NOT_CONFIGURED') {
+            return res.status(error.status || 503).json({
+                status: error.status || 503,
+                error: 1,
+                message: 'Avatar upload service is not configured',
+                data: {},
+            });
+        }
+
         console.error('createUser error:', error);
         return res.status(500).json({
             status: 500,
@@ -105,7 +124,7 @@ exports.createUser = async (req, res) => {
 };
 
 exports.updateUser = async (req, res) => {
-    const { user_id, full_name, email, birthday, birth_time, gender, device_info, avatar_base64, firebase_token } = req.body;
+    const { user_id, full_name, email, birthday, birth_time, gender, device_info, avatar_base64, avatar_url, firebase_token } = req.body;
 
     if (!user_id || !full_name || !email || !birthday || !birth_time || !gender) {
         return res.status(400).json({
@@ -126,6 +145,7 @@ exports.updateUser = async (req, res) => {
             gender,
             device_info,
             avatar_base64,
+            avatar_url,
             firebase_token,
         });
 
@@ -168,6 +188,24 @@ exports.updateUser = async (req, res) => {
                 status: 400,
                 error: 1,
                 message: 'Invalid user_id',
+                data: {},
+            });
+        }
+
+        if (error.code === 'AVATAR_UPLOAD_FAILED') {
+            return res.status(error.status || 502).json({
+                status: error.status || 502,
+                error: 1,
+                message: error.message || 'Failed to upload avatar',
+                data: {},
+            });
+        }
+
+        if (error.code === 'IMGBB_NOT_CONFIGURED') {
+            return res.status(error.status || 503).json({
+                status: error.status || 503,
+                error: 1,
+                message: 'Avatar upload service is not configured',
                 data: {},
             });
         }

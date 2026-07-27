@@ -19,7 +19,7 @@ exports.authenticateToken = (req, res, next) => {
         return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    jwt.verify(token, tokenSecret, (err, decoded) => {
+    jwt.verify(token, tokenSecret, { algorithms: ['HS256'] }, (err, decoded) => {
         if (err) {
             return res.status(401).json({ message: 'Invalid or expired token' });
         }
