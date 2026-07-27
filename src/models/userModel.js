@@ -1,4 +1,6 @@
 const pool = require('../config/db');
+const cacheService = require('../services/cacheService');
+const userCache = require('../services/userCache');
 const solarlunar = require('solarlunar').default || require('solarlunar');
 const { generateLaSo } = require('tuvi-neo');
 
@@ -760,10 +762,25 @@ const calculateAge = (birthday) => {
     return age;
 };
 
+const hasStoredTuViChart = (user) => {
+    const tuVi = user?.astro_profile?.tu_vi;
+    return Boolean(tuVi?.chart || tuVi?.info);
+};
+
+const resolveAstroForDisplay = (user) => {
+    if (hasStoredTuViChart(user)) {
+        return user.astro_profile;
+    }
+    if (!user?.birth_time) {
+        return user?.astro_profile || {};
+    }
+    return buildAstroProfile(user.full_name, user.birthday, user.birth_time, user.gender);
+};
+
 const buildClientDisplayData = (user) => {
     if (!user) return null;
 
-    const astro = buildAstroProfile(user.full_name, user.birthday, user.birth_time, user.gender) || user.astro_profile || {};
+    const astro = resolveAstroForDisplay(user) || {};
     const canChiBirth = buildCanChi(user.birthday, user.birth_time);
     const currentYearLabel = getCurrentYearLabel();
     const namXemYearCanChi = currentYearLabel.match(/\(([^)]+)\)/)?.[1] || null;
@@ -1070,7 +1087,7 @@ const createUsersTable = async () => {
     }
 };
 
-const findUserByDeviceId = async (deviceId) => {
+const findUserByDeviceIdFromDb = async (deviceId) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,
              u.device_id, u.device_info, u.avatar_base64, u.firebase_token, u.user_code, u.created_at, u.updated_at,
@@ -1085,7 +1102,22 @@ const findUserByDeviceId = async (deviceId) => {
     return rows.length > 0 ? formatUserRow(rows[0]) : null;
 };
 
-const findUserById = async (userId) => {
+const findUserByDeviceId = async (deviceId) => {
+    const cacheKey = userCache.keys.userByDevice(deviceId);
+    const cached = await cacheService.get(cacheKey);
+    if (cached !== undefined) {
+        return cached;
+    }
+
+    const user = await findUserByDeviceIdFromDb(deviceId);
+    const ttl = user === null
+        ? (Number(process.env.CACHE_MISS_TTL_SECONDS) || 60)
+        : userCache.userTtl();
+    await cacheService.set(cacheKey, user, ttl);
+    return user;
+};
+
+const findUserByIdFromDb = async (userId) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,
              u.device_id, u.device_info, u.avatar_base64, u.firebase_token, u.user_code, u.created_at, u.updated_at,
@@ -1098,6 +1130,21 @@ const findUserById = async (userId) => {
     `;
     const [rows] = await pool.query(sql, [userId]);
     return rows.length > 0 ? formatUserRow(rows[0]) : null;
+};
+
+const findUserById = async (userId) => {
+    const cacheKey = userCache.keys.userById(userId);
+    const cached = await cacheService.get(cacheKey);
+    if (cached !== undefined) {
+        return cached;
+    }
+
+    const user = await findUserByIdFromDb(userId);
+    const ttl = user === null
+        ? (Number(process.env.CACHE_MISS_TTL_SECONDS) || 60)
+        : userCache.userTtl();
+    await cacheService.set(cacheKey, user, ttl);
+    return user;
 };
 
 const findUserByEmail = async (email) => {
@@ -1215,7 +1262,7 @@ const createUser = async (userData) => {
     const cung_phi = astroProfile.cung_phi;
     const normalizedAvatarBase64 = extractAvatarBase64(avatar_base64);
 
-    const existingUser = await findUserByDeviceId(device_id);
+    const existingUser = await findUserByDeviceIdFromDb(device_id);
 
     const normalized_user_code = generateUserCode();
 
@@ -1274,7 +1321,8 @@ const createUser = async (userData) => {
             so_net: astroProfile.so_net,
         });
 
-        return await findUserByDeviceId(device_id);
+        await userCache.invalidateUser(existingUser.id, device_id);
+        return await findUserByDeviceIdFromDb(device_id);
     }
 
     const existingEmailUser = await findUserByEmail(normalizedEmail);
@@ -1325,7 +1373,8 @@ const createUser = async (userData) => {
         so_net: astroProfile.so_net,
     });
 
-    return await findUserByDeviceId(device_id);
+    await userCache.invalidateUser(result.insertId, device_id);
+    return await findUserByDeviceIdFromDb(device_id);
 };
 
 const updateUser = async (userData) => {
@@ -1341,7 +1390,7 @@ const updateUser = async (userData) => {
         throw error;
     }
 
-    const existingUser = await findUserById(userId);
+    const existingUser = await findUserByIdFromDb(userId);
     if (!existingUser) {
         const error = new Error(`User not found: ${userId}`);
         error.code = 'USER_NOT_FOUND';
@@ -1415,7 +1464,8 @@ const updateUser = async (userData) => {
         so_net: astroProfile.so_net,
     });
 
-    return await findUserById(userId);
+    await userCache.invalidateUser(userId, existingUser.device_id);
+    return await findUserByIdFromDb(userId);
 };
 
 module.exports = {

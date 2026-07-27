@@ -28,12 +28,29 @@ Cấu trúc dự án Node.js cơ bản với Express và MySQL.
 
 ## Biến môi trường
 
-Sử dụng `.env` để cấu hình cổng và thông tin MySQL.
+Sử dụng `.env` để cấu hình cổng, MySQL, Redis và rate limit. Xem mẫu tại `.env.example`.
 
+### Redis & cache (khuyến nghị production)
+
+1. Chạy Redis local: `docker compose up -d redis`
+2. Trong `.env`: `REDIS_ENABLED=true`, `REDIS_HOST=127.0.0.1`, `REDIS_PORT=6379`
+3. API đọc nặng (`check-device`, `la-so-tu-vi`) được cache; create/update tự xóa cache.
+
+Nếu Redis không chạy, server vẫn hoạt động (fallback MySQL), chỉ mất lớp cache và rate limit phân tán.
+
+### Chịu tải cao (nhiều user cùng lúc)
+
+- **Redis**: cache response + rate limit đồng bộ giữa nhiều instance Node.
+- **DB pool**: tăng `DB_POOL_SIZE` (mặc định 25), không vượt quá giới hạn MySQL host.
+- **Rate limit**: `RATE_LIMIT_MAX`, `RATE_LIMIT_HEAVY_MAX` — tránh làm sập DB khi traffic spike.
+- **Scale ngang**: chạy nhiều process Node (PM2 cluster / nhiều container) phía sau reverse proxy (Nginx), cùng một Redis và MySQL.
+- **CDN / static**: file `public/` có thể serve từ CDN để giảm tải app server.
 
 ## pull code mới nhất từ GitHub về máy chủ Alwaysdata
 
 cd ~/www/TuViServer
+
+để sửa file .env : nano .env
 
 git pull origin main
 

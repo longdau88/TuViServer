@@ -1,3 +1,5 @@
+const cacheService = require('../services/cacheService');
+const userCache = require('../services/userCache');
 const { findUserByDeviceId, findUserById, createUser, updateUser, buildClientDisplayData } = require('../models/userModel');
 
 exports.checkDeviceId = async (req, res) => {
@@ -20,6 +22,7 @@ exports.checkDeviceId = async (req, res) => {
             console.warn(`checkDeviceId slow query: ${durationMs}ms`, { device_id: deviceId });
         }
 
+        res.set('Cache-Control', 'private, max-age=60');
         return res.json({
             status: 200,
             error: 0,
@@ -212,11 +215,18 @@ exports.getProfileDisplay = async (req, res) => {
             });
         }
 
+        const displayData = await cacheService.getOrSet(
+            userCache.keys.profileDisplay(userId),
+            userCache.displayTtl(),
+            () => buildClientDisplayData(user),
+        );
+
+        res.set('Cache-Control', 'private, max-age=120');
         return res.json({
             status: 200,
             error: 0,
             message: 'OK',
-            data: buildClientDisplayData(user),
+            data: displayData,
         });
     } catch (error) {
         console.error('getProfileDisplay error:', error);
