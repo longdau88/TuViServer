@@ -149,6 +149,13 @@ exports.updateUser = async (req, res) => {
             firebase_token,
         });
 
+        // Invalidate the cache for this user
+        if (updatedUser && updatedUser.user_id) {
+            const cacheKey = userCache.keys.profileDisplay(updatedUser.user_id);
+            await cacheService.del(cacheKey);
+            console.log(`[Cache] Cleared cache for user_id: ${updatedUser.user_id}`);
+        }
+
         return res.json({
             status: 200,
             error: 0,
@@ -272,6 +279,26 @@ exports.getProfileDisplay = async (req, res) => {
             status: 500,
             error: 1,
             message: 'Internal Server Error',
+            data: {},
+        });
+    }
+};
+
+exports.clearAllCache = async (req, res) => {
+    try {
+        await cacheService.clearAll();
+        return res.status(200).json({
+            status: 200,
+            error: 0,
+            message: 'All caches cleared successfully.',
+            data: {},
+        });
+    } catch (error) {
+        console.error('clearAllCache error:', error);
+        return res.status(500).json({
+            status: 500,
+            error: 1,
+            message: 'Internal Server Error while clearing cache.',
             data: {},
         });
     }

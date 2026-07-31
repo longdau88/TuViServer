@@ -19,6 +19,8 @@ const createStore = (prefix) => {
 const standardHeaders = true;
 const legacyHeaders = false;
 
+const skipInDevelopment = () => process.env.NODE_ENV === 'development';
+
 const apiLimiter = rateLimit({
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 60 * 1000,
     limit: Number(process.env.RATE_LIMIT_MAX) || 120,
@@ -31,7 +33,7 @@ const apiLimiter = rateLimit({
         message: 'Too many requests, please try again later',
         data: {},
     },
-    skip: (req) => req.path === '/health',
+    skip: (req) => skipInDevelopment() || req.path === '/health',
 });
 
 const heavyReadLimiter = rateLimit({
@@ -46,6 +48,7 @@ const heavyReadLimiter = rateLimit({
         message: 'Too many chart requests, please slow down',
         data: {},
     },
+    skip: skipInDevelopment,
 });
 
 const authLimiter = rateLimit({
@@ -60,6 +63,7 @@ const authLimiter = rateLimit({
         message: 'Too many authentication attempts',
         data: {},
     },
+    skip: skipInDevelopment,
 });
 
 const writeLimiter = rateLimit({
@@ -74,6 +78,7 @@ const writeLimiter = rateLimit({
         message: 'Too many write requests, please try again later',
         data: {},
     },
+    skip: skipInDevelopment,
 });
 
 module.exports = {

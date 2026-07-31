@@ -471,6 +471,18 @@ const mapTuViStar = (star, loai) => ({
     loai,
 });
 
+const CAN_ARRAY = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
+const CHI_ARRAY = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tị', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
+
+const calculatePalaceCanChi = (namAmLich, index) => {
+    if (!namAmLich) return CHI_ARRAY[index]; // Fallback
+    const canIndex = CAN_ARRAY.findIndex(c => namAmLich.toUpperCase().includes(c.toUpperCase()));
+    if (canIndex === -1) return CHI_ARRAY[index];
+    const canDan = ((canIndex % 5) * 2 + 2) % 10;
+    const canCung = (canDan + (index - 2) + 12) % 10;
+    return CAN_ARRAY[canCung] + ' ' + CHI_ARRAY[index];
+};
+
 const buildTuViChart = (fullName, birthday, birthTime, gender) => {
     const birth = resolveBirthDateTime(birthday, birthTime);
     if (!birth) return null;
@@ -490,6 +502,8 @@ const buildTuViChart = (fullName, birthday, birthTime, gender) => {
 
     const palaces = (chart.Cac_cung || []).map((palace, index) => {
         const key = `${index + 1}_${slugifyVietnamese(palace.Name)}`;
+        const namAmLich = chart.Info?.Nam || '';
+        const canChiCung = calculatePalaceCanChi(namAmLich, index);
 
         return {
             key,
@@ -507,6 +521,7 @@ const buildTuViChart = (fullName, birthday, birthTime, gender) => {
             ].filter(Boolean).join(', ') || null,
             vong_trang_sinh: palace.TrangSinh || null,
             ngu_hanh_cung: palaceElementMap[palace.NguHanhCung] || null,
+            can_chi: canChiCung,
         };
     });
 

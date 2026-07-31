@@ -3,7 +3,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { authLimiter } = require('../middleware/rateLimitMiddleware');
 
-router.post('/token', authLimiter, authController.getToken);
-router.get('/web-token', authLimiter, authController.getWebToken);
+router.post('/token', authController.getToken);
+router.get('/web-token', authController.getWebToken);
 
 module.exports = router;

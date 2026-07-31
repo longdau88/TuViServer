@@ -123,11 +123,25 @@ const getOrSet = async (key, ttlSeconds, factory, lockSeconds = 15) => {
     }
 };
 
+const clearAll = async () => {
+    if (!isRedisReady()) {
+        console.warn('[Cache] Redis not ready, skipping cache clear all.');
+        return;
+    }
+    try {
+        await getRedis().flushdb();
+        console.warn('[Cache] All keys have been flushed from the current Redis database.');
+    } catch (error) {
+        console.error('[Cache] flushdb failed:', error.message);
+    }
+};
+
 module.exports = {
     get,
     set,
     del,
     delByPattern,
     getOrSet,
+    clearAll,
     defaultTtlSeconds,
 };

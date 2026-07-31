@@ -61,8 +61,12 @@ exports.getWebToken = (_req, res) => {
     const accessToken = signAccessToken('web-ui');
 
     return res.json({
-        token_type: 'Bearer',
-        expires_in: tokenExpiresIn,
-        access_token: accessToken,
+        error: 0,
+        message: 'Token granted for web UI',
+        data: {
+            token_type: 'Bearer',
+            expires_in: tokenExpiresIn,
+            access_token: accessToken,
+        }
     });
 };
