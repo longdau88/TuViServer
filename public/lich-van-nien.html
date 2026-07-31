@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lịch Vạn Niên - Tử Vi Vận Mệnh</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="lich-van-nien.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/" id="navbar-brand">
+                <i class="bi bi-stars"></i>
+                Tử Vi Vận Mệnh
+            </a>
+        </div>
+    </nav>
+
+    <main class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap welcome-header">
+             <h1 class="mb-2 mb-md-0 display-5">Lịch Vạn Niên</h1>
+             <a href="/" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Về Bảng điều khiển
+             </a>
+        </div>
+        <p class="lead text-white opacity-75 mb-4">Tra cứu ngày tốt xấu, chuyển đổi lịch Âm Dương.</p>
+
+        <div class="card form-card shadow">
+            <div class="card-header bg-transparent border-bottom">
+                <ul class="nav nav-tabs card-header-tabs" id="calendar-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-medium" id="tab-today" data-bs-toggle="tab" data-bs-target="#content-today" type="button" role="tab"><i class="bi bi-calendar-day"></i> Hôm nay</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-medium" id="tab-calendar" data-bs-toggle="tab" data-bs-target="#content-calendar" type="button" role="tab"><i class="bi bi-calendar-month"></i> Lịch</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-medium" id="tab-convert" data-bs-toggle="tab" data-bs-target="#content-convert" type="button" role="tab"><i class="bi bi-arrow-left-right"></i> Đổi ngày</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body p-4 tab-content" id="calendar-tabs-content">
+                
+                <!-- Tab: Hôm Nay -->
+                <div class="tab-pane fade show active text-center" id="content-today" role="tabpanel">
+                    <div id="today-loading" class="spinner-border text-primary my-4" role="status"></div>
+                    <div id="today-content" class="d-none">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Tab: Lịch (Tháng) -->
+                <div class="tab-pane fade" id="content-calendar" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <button class="btn btn-outline-primary" id="btn-prev-month"><i class="bi bi-chevron-left"></i> Tháng trước</button>
+                        <h4 class="mb-0 text-info fw-bold" id="month-title">Tháng ... Năm ...</h4>
+                        <button class="btn btn-outline-primary" id="btn-next-month">Tháng sau <i class="bi bi-chevron-right"></i></button>
+                    </div>
+                    <div id="month-loading" class="text-center my-4 d-none"><div class="spinner-border text-primary" role="status"></div></div>
+                    <div id="month-content" class="calendar-grid-view mx-auto" style="max-width: 800px;">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Tab: Đổi Ngày -->
+                <div class="tab-pane fade" id="content-convert" role="tabpanel">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <form id="convert-form" class="mb-4">
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="convert-type">
+                                            <option value="solar2lunar">Dương sang Âm</option>
+                                            <option value="lunar2solar">Âm sang Dương</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="date" class="form-control" id="convert-date" required>
+                                    </div>
+                                    <div class="col-md-3 d-grid">
+                                        <button type="submit" class="btn btn-primary">Chuyển đổi</button>
+                                    </div>
+                                </div>
+                                <div class="form-check mt-2 d-none" id="leap-month-check-container">
+                                    <input class="form-check-input" type="checkbox" value="" id="convert-is-leap">
+                                    <label class="form-check-label text-muted" for="convert-is-leap">
+                                        Đây là tháng nhuận (chỉ dùng khi đổi Âm -> Dương)
+                                    </label>
+                                </div>
+                            </form>
+                            <div id="convert-result" class="text-center d-none">
+                                <!-- Rendered by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer mt-auto py-3">
+        <div class="container text-center">
+            <span>&copy; <script>document.write(new Date().getFullYear())</script> Tử Vi Vận Mệnh. All Rights Reserved.</span>
+        </div>
+    </footer>
+
+    <!-- Modal Xem Ngày -->
+    <div class="modal fade" id="dayDetailModal" tabindex="-1" aria-labelledby="dayDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: transparent; border: none; box-shadow: none;">
+                <div class="modal-body p-0" id="dayDetailModalBody">
+                    <!-- Nội dung block lịch xé sẽ được chèn vào đây -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="lich-van-nien.js"></script>
+</body>
+</html>

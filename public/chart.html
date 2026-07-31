@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lá Số Tử Vi - Khám Phá Vận Mệnh</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/" id="navbar-brand">
+                <i class="bi bi-stars"></i>
+                Tử Vi Vận Mệnh
+            </a>
+        </div>
+    </nav>
+
+    <main class="container my-4">
+        
+        <!-- Chart Loading Screen -->
+        <section id="chart-loading-screen" class="d-none text-center">
+             <div class="card form-card shadow">
+                <div class="card-body p-4 p-md-5">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h3 class="mt-4">Đang An Sao Lập Số...</h3>
+                    <p class="text-muted">Quá trình này có thể mất vài giây, xin vui lòng chờ.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Screen -->
+        <section id="results-screen" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                 <h2 class="mb-2 mb-md-0">Lá Số Tử Vi</h2>
+                 <button id="results-back-button" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Về Bảng điều khiển
+                 </button>
+            </div>
+            <div id="results-content">
+                <!-- User profile and chart details will be injected here by app.js -->
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer mt-auto py-3">
+        <div class="container text-center">
+            <span>&copy; <script>document.write(new Date().getFullYear())</script> Tử Vi Vận Mệnh. All Rights Reserved.</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="chart.js"></script>
+</body>
+
+</html>

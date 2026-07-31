@@ -1,6 +1,8 @@
 const cacheService = require('../services/cacheService');
 const userCache = require('../services/userCache');
-const { findUserByDeviceId, findUserById, createUser, updateUser, buildClientDisplayData } = require('../models/userModel');
+const { findUserByDeviceId, findUserById } = require('../models/userModel');
+const { createUser, updateUser } = require('../services/userService');
+const { buildClientDisplayData } = require('../services/displayService');
 
 exports.checkDeviceId = async (req, res) => {
     const deviceId = req.query.device_id;
@@ -150,10 +152,11 @@ exports.updateUser = async (req, res) => {
         });
 
         // Invalidate the cache for this user
-        if (updatedUser && updatedUser.user_id) {
-            const cacheKey = userCache.keys.profileDisplay(updatedUser.user_id);
+        const finalUserId = updatedUser && (updatedUser.id || updatedUser.user_id);
+        if (finalUserId) {
+            const cacheKey = userCache.keys.profileDisplay(finalUserId);
             await cacheService.del(cacheKey);
-            console.log(`[Cache] Cleared cache for user_id: ${updatedUser.user_id}`);
+            console.log(`[Cache] Cleared cache for user_id: ${finalUserId}`);
         }
 
         return res.json({
