@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chọn Ngày Giờ Tốt Cá Nhân Hóa - Tử Vi Vận Mệnh</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        .auspicious-card {
+            background-color: rgba(28, 22, 66, 0.65);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.25rem;
+        }
+
+        .purpose-btn-group .btn {
+            border-radius: 1rem;
+            padding: 0.75rem 1.25rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 0.3rem;
+            height: 100%;
+        }
+
+        .purpose-btn-group .btn i {
+            font-size: 1.5rem;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-header-day {
+            text-align: center;
+            font-weight: 700;
+            color: var(--secondary-color);
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .day-cell {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
+            padding: 0.6rem 0.4rem;
+            min-height: 95px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .day-cell:hover {
+            transform: translateY(-3px);
+            border-color: var(--secondary-color);
+            box-shadow: 0 4px 15px rgba(253, 216, 53, 0.25);
+        }
+
+        .day-cell.badge-good {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.35) 0%, rgba(32, 201, 151, 0.25) 100%);
+            border: 2px solid #28a745;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .day-cell.badge-neutral {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(253, 126, 20, 0.15) 100%);
+            border: 1.5px solid #ffc107;
+        }
+
+        .day-cell.badge-bad {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.3) 0%, rgba(176, 42, 55, 0.25) 100%);
+            border: 1.5px solid #dc3545;
+            box-shadow: 0 0 8px rgba(220, 53, 69, 0.2);
+        }
+
+        .solar-day-num {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .lunar-day-text {
+            font-size: 0.75rem;
+            color: #ffc107;
+        }
+
+        .day-score-tag {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.1rem 0.4rem;
+            border-radius: 10px;
+            align-self: flex-start;
+        }
+
+        .tag-good { background: #28a745; color: #fff; box-shadow: 0 0 6px rgba(40, 167, 69, 0.5); }
+        .tag-neutral { background: #ffc107; color: #000; font-weight: 700; }
+        .tag-bad { background: #dc3545; color: #fff; }
+
+        .self-info-badge {
+            background: rgba(94, 53, 177, 0.3);
+            border: 1px solid rgba(253, 216, 53, 0.3);
+            border-radius: 1rem;
+            padding: 1rem 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-stars"></i>
+                Tử Vi Vận Mệnh
+            </a>
+        </div>
+    </nav>
+
+    <main class="container my-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap welcome-header">
+            <div>
+                <h1 class="mb-1 display-5">Chọn Ngày Giờ Tốt Cá Nhân Hóa</h1>
+                <p class="lead mb-0 text-muted">Tra cứu ngày lành tháng tốt chuẩn xác theo Mệnh Nạp Âm & Tuổi của bạn</p>
+            </div>
+            <a href="/" class="btn btn-outline-secondary mt-2 mt-md-0">
+                <i class="bi bi-arrow-left"></i> Về Bảng điều khiển
+            </a>
+        </div>
+
+        <!-- Input Section -->
+        <section id="form-section">
+            <div class="card auspicious-card shadow p-3 p-md-4 mb-4">
+                <!-- Target Person Selector (Bản thân / Người khác) -->
+                <div class="text-center mb-4">
+                    <label class="form-label d-block text-warning fw-bold mb-2 fs-5">Chọn Đối Tượng Xem Ngày Tốt:</label>
+                    <div class="btn-group mode-toggle-group" role="group" id="target-mode-group">
+                        <input type="radio" class="btn-check" name="target-mode" id="mode-self" value="self" checked>
+                        <label class="btn btn-outline-warning" for="mode-self">
+                            <i class="bi bi-person-check-fill me-1"></i> Xem Cho Bản Thân
+                        </label>
+
+                        <input type="radio" class="btn-check" name="target-mode" id="mode-other" value="other">
+                        <label class="btn btn-outline-warning" for="mode-other">
+                            <i class="bi bi-person-plus-fill me-1"></i> Nhập Thông Tin Người Khác
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Self Profile Info Display -->
+                <div id="self-profile-display" class="mb-4 text-center">
+                    <div class="self-info-badge d-inline-block text-start">
+                        <h5 class="text-warning mb-1" id="self-display-name">
+                            <i class="bi bi-person-fill me-1"></i> Hồ sơ của bạn
+                        </h5>
+                        <p class="text-white mb-0 small" id="self-display-details">Đang tải thông tin hồ sơ...</p>
+                    </div>
+                </div>
+
+                <!-- Form -->
+                <form id="auspicious-form">
+                    <!-- Other Profile Inputs -->
+                    <div id="other-input-container" class="row g-3 mb-4 d-none">
+                        <div class="col-md-4">
+                            <label for="user-name" class="form-label fw-bold">Họ và tên</label>
+                            <input type="text" class="form-control" id="user-name" placeholder="Nguyễn Văn A">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="user-birthday" class="form-label fw-bold">Ngày sinh (Dương lịch)</label>
+                            <input type="date" class="form-control" id="user-birthday">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="user-birthtime" class="form-label fw-bold">Giờ sinh</label>
+                            <input type="time" class="form-control" id="user-birthtime" value="08:00">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold d-block">Giới tính</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="user-gender" id="gender-male" value="nam" checked>
+                                <label class="btn btn-outline-info" for="gender-male">Nam</label>
+                                <input type="radio" class="btn-check" name="user-gender" id="gender-female" value="nu">
+                                <label class="btn btn-outline-info" for="gender-female">Nữ</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Purpose Selector Grid -->
+                    <label class="form-label fw-bold d-block text-warning mb-2 fs-5 text-center">Chọn Mục Đích Công Việc:</label>
+                    <div class="row g-2 mb-4 purpose-btn-group">
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <input type="radio" class="btn-check" name="purpose" id="purpose-khai-truong" value="khai_truong" checked>
+                            <label class="btn btn-outline-warning" for="purpose-khai-truong">
+                                <i class="bi bi-shop"></i>
+                                <span>Khai Trương</span>
+                            </label>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <input type="radio" class="btn-check" name="purpose" id="purpose-cuoi-hoi" value="cuoi_hoi">
+                            <label class="btn btn-outline-warning" for="purpose-cuoi-hoi">
+                                <i class="bi bi-heart-fill"></i>
+                                <span>Cưới Hỏi</span>
+                            </label>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <input type="radio" class="btn-check" name="purpose" id="purpose-dong-tho" value="dong_tho">
+                            <label class="btn btn-outline-warning" for="purpose-dong-tho">
+                                <i class="bi bi-house-door-fill"></i>
+                                <span>Động Thổ</span>
+                            </label>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <input type="radio" class="btn-check" name="purpose" id="purpose-mua-xe" value="mua_xe">
+                            <label class="btn btn-outline-warning" for="purpose-mua-xe">
+                                <i class="bi bi-car-front-fill"></i>
+                                <span>Mua Xe</span>
+                            </label>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <input type="radio" class="btn-check" name="purpose" id="purpose-xuat-hanh" value="xuat_hanh">
+                            <label class="btn btn-outline-warning" for="purpose-xuat-hanh">
+                                <i class="bi bi-airplane-fill"></i>
+                                <span>Xuất Hành</span>
+                            </label>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <input type="radio" class="btn-check" name="purpose" id="purpose-giao-dich" value="giao_dich">
+                            <label class="btn btn-outline-warning" for="purpose-giao-dich">
+                                <i class="bi bi-file-earmark-text-fill"></i>
+                                <span>Ký Hợp Đồng</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Month & Year Selector -->
+                    <div class="row g-3 justify-content-center align-items-center mb-4">
+                        <div class="col-6 col-md-3">
+                            <label for="select-month" class="form-label fw-bold">Chọn Tháng Dương Lịch</label>
+                            <select class="form-select bg-dark text-white border-secondary" id="select-month">
+                                <!-- Generated by JS -->
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label for="select-year" class="form-label fw-bold">Chọn Năm</label>
+                            <select class="form-select bg-dark text-white border-secondary" id="select-year">
+                                <!-- Generated by JS -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg px-5 py-2.5 rounded-pill fw-bold shadow">
+                            <i class="bi bi-calendar-check-fill me-2"></i> Phân Tích Lịch Cá Nhân Hóa
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Loading Section -->
+        <section id="loading-section" class="d-none text-center my-5">
+            <div class="spinner-border text-warning" style="width: 3.5rem; height: 3.5rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h3 class="mt-4 text-white">Đang phân tích Lịch Cát Tường cá nhân hóa...</h3>
+            <p class="text-muted">Đang đối chiếu Ngũ Hành Nạp Âm & Địa Chi Tuổi cho từng ngày trong tháng.</p>
+        </section>
+
+        <!-- Results Section -->
+        <section id="results-section" class="d-none">
+            <!-- Header Summary -->
+            <div class="card auspicious-card shadow p-4 text-center mb-4">
+                <h3 class="text-warning mb-2" id="res-purpose-title">--</h3>
+                <p class="lead text-white opacity-90 mx-auto mb-1" id="res-user-info">--</p>
+                <p class="text-muted small mb-0" id="res-stats-summary">--</p>
+            </div>
+
+            <!-- Top Recommended Days Section -->
+            <div class="card auspicious-card shadow p-4 mb-4">
+                <h4 class="text-warning mb-3"><i class="bi bi-trophy-fill me-2"></i> Top 5 Ngày Tốt Nhất Trong Tháng</h4>
+                <div class="row g-3" id="top-days-container">
+                    <!-- Dynamic Top Days -->
+                </div>
+            </div>
+
+            <!-- Full Calendar Grid -->
+            <div class="card auspicious-card shadow p-3 p-md-4 mb-4">
+                <h4 class="text-warning mb-3"><i class="bi bi-calendar3 me-2"></i> Bảng Lịch Cát Tường Chi Tiết</h4>
+                
+                <div class="calendar-grid mb-2">
+                    <div class="calendar-header-day">T2</div>
+                    <div class="calendar-header-day">T3</div>
+                    <div class="calendar-header-day">T4</div>
+                    <div class="calendar-header-day">T5</div>
+                    <div class="calendar-header-day">T6</div>
+                    <div class="calendar-header-day">T7</div>
+                    <div class="calendar-header-day text-danger">CN</div>
+                </div>
+
+                <div class="calendar-grid" id="full-calendar-cells">
+                    <!-- Dynamic Grid Cells -->
+                </div>
+            </div>
+
+            <!-- Selected Day Detail Modal/Card -->
+            <div id="day-detail-card" class="card auspicious-card shadow p-4 mb-5 d-none">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                    <h3 class="text-warning mb-0" id="detail-day-date">--</h3>
+                    <span class="badge bg-purple p-2 fs-6" id="detail-day-lunar">--</span>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h5 class="text-info border-bottom border-secondary pb-2"><i class="bi bi-check-circle-fill me-2 text-success"></i> Điểm Tốt & Hợp Bản Mệnh</h5>
+                        <ul class="list-group list-group-flush" id="detail-reasons-list">
+                            <!-- Dynamic Reasons -->
+                        </ul>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h5 class="text-danger border-bottom border-secondary pb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i> Lưu Ý & Cảnh Báo</h5>
+                        <ul class="list-group list-group-flush" id="detail-warnings-list">
+                            <!-- Dynamic Warnings -->
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-4 border-top border-secondary pt-3">
+                    <h5 class="text-warning mb-3"><i class="bi bi-clock-history me-2"></i> Giờ Hoàng Đạo Cá Nhân Hóa (Hợp Bản Mệnh)</h5>
+                    <div id="detail-hours-container">
+                        <!-- Dynamic Hours -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer mt-auto py-3 text-center">
+        <div class="container">
+            <span class="text-muted">&copy; 2024 Tử Vi Vận Mệnh. All Rights Reserved.</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="chon-ngay-tot.js"></script>
+</body>
+
+</html>

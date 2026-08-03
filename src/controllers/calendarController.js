@@ -159,3 +159,101 @@ exports.getCalendarGrid = (req, res) => {
 
     return res.json({ status: 200, error: 0, message: 'OK', data: result });
 };
+
+const auspiciousService = require('../services/auspiciousService');
+const cacheService = require('../services/cacheService');
+const { findUserByDeviceId, findUserById } = require('../models/userModel');
+
+exports.getPersonalizedAuspiciousDays = async (req, res) => {
+    try {
+        const body = req.body || {};
+        const query = req.query || {};
+
+        const now = new Date();
+        const year = parseInt(body.year || query.year) || now.getFullYear();
+        const month = parseInt(body.month || query.month) || (now.getMonth() + 1);
+        const purpose = body.purpose || query.purpose || 'khai_truong';
+
+        // Resolve user profile
+        let personInput = null;
+
+        if (body.birthday && body.birth_time && body.gender) {
+            personInput = {
+                full_name: body.full_name || query.full_name || 'Người dùng',
+                birthday: body.birthday,
+                birth_time: body.birth_time,
+                gender: body.gender,
+            };
+        } else {
+            const userId = body.user_id || query.user_id;
+            const deviceId = body.device_id || query.device_id;
+
+            let dbUser = null;
+            if (userId) {
+                dbUser = await findUserById(userId);
+            } else if (deviceId) {
+                dbUser = await findUserByDeviceId(deviceId);
+            }
+
+            if (dbUser && dbUser.birthday && dbUser.birth_time && dbUser.gender) {
+                personInput = {
+                    full_name: dbUser.full_name || 'Người dùng',
+                    birthday: dbUser.birthday,
+                    birth_time: dbUser.birth_time,
+                    gender: dbUser.gender,
+                };
+            }
+        }
+
+        if (!personInput) {
+            return res.status(400).json({
+                status: 400,
+                error: 1,
+                message: 'Thiếu thông tin cá nhân (bắt buộc: birthday, birth_time, gender hoặc user_id/device_id)',
+                data: {},
+            });
+        }
+
+        // Cache Key construction
+        const cacheKeyParts = [
+            personInput.full_name, personInput.birthday, personInput.birth_time, personInput.gender,
+            year, month, purpose,
+        ].join(':');
+
+        const cacheKey = `auspicious_days_v3:${Buffer.from(cacheKeyParts).toString('base64').substring(0, 64)}`;
+
+        // Check Redis Cache
+        const cachedData = await cacheService.get(cacheKey);
+        if (cachedData !== undefined) {
+            res.set('Cache-Control', 'private, max-age=300');
+            return res.json({
+                status: 200,
+                error: 0,
+                message: 'OK (cached)',
+                data: cachedData,
+            });
+        }
+
+        // Compute Personalized Auspicious Days
+        const result = auspiciousService.findPersonalizedAuspiciousDays(year, month, purpose, personInput);
+
+        // Store in cache (TTL: 1 hour)
+        await cacheService.set(cacheKey, result, 3600);
+
+        res.set('Cache-Control', 'private, max-age=300');
+        return res.json({
+            status: 200,
+            error: 0,
+            message: 'OK',
+            data: result,
+        });
+    } catch (error) {
+        console.error('getPersonalizedAuspiciousDays error:', error);
+        return res.status(500).json({
+            status: 500,
+            error: 1,
+            message: 'Lỗi server khi tìm ngày tốt cá nhân hóa',
+            data: {},
+        });
+    }
+};

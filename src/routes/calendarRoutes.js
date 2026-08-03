@@ -7,5 +7,7 @@ router.get('/month', calendarController.getMonth);
 router.get('/year', calendarController.getYear);
 router.get('/grid', calendarController.getCalendarGrid);
 router.get('/convert', calendarController.convertDate);
+router.post('/auspicious-days', calendarController.getPersonalizedAuspiciousDays);
+router.get('/auspicious-days', calendarController.getPersonalizedAuspiciousDays);
 
 module.exports = router;

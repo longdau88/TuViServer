@@ -21,6 +21,7 @@ app.get('/create-user', (req, res) => res.sendFile(path.join(publicDir, 'create-
 app.get('/update-user', (req, res) => res.sendFile(path.join(publicDir, 'update-user.html')));
 app.get('/tu-vi-doi', (req, res) => res.sendFile(path.join(publicDir, 'tu-vi-doi.html')));
 app.get('/van-han-realtime', (req, res) => res.sendFile(path.join(publicDir, 'van-han-realtime.html')));
+app.get('/chon-ngay-tot', (req, res) => res.sendFile(path.join(publicDir, 'chon-ngay-tot.html')));
 
 app.use(apiLimiter);
 app.use('/', routes);
