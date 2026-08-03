@@ -16,6 +16,12 @@ app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 app.use(express.static(publicDir));
 
+app.get('/favicon.ico', (req, res) => res.sendFile(path.join(publicDir, 'favicon.svg')));
+app.get('/create-user', (req, res) => res.sendFile(path.join(publicDir, 'create-user.html')));
+app.get('/update-user', (req, res) => res.sendFile(path.join(publicDir, 'update-user.html')));
+app.get('/tu-vi-doi', (req, res) => res.sendFile(path.join(publicDir, 'tu-vi-doi.html')));
+app.get('/van-han-realtime', (req, res) => res.sendFile(path.join(publicDir, 'van-han-realtime.html')));
+
 app.use(apiLimiter);
 app.use('/', routes);
 

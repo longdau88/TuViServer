@@ -22,12 +22,24 @@ document.addEventListener('DOMContentLoaded', function () {
         if (webToken) {
             headers['Authorization'] = `Bearer ${webToken}`;
         }
-        const response = await fetch(endpoint, { ...options, headers });
-        const data = await response.json().catch(() => ({
-            error: 1,
-            message: 'Không thể parse JSON từ server',
-            data: null
-        }));
+        let response;
+        try {
+            response = await fetch(endpoint, { ...options, headers });
+        } catch (networkError) {
+            throw new Error(`Lỗi kết nối máy chủ: ${networkError.message}`);
+        }
+
+        const rawText = await response.text().catch(() => '');
+        let data;
+        if (rawText && rawText.trim() !== '' && rawText.trim() !== 'undefined') {
+            try {
+                data = JSON.parse(rawText);
+            } catch (parseErr) {
+                data = { error: 1, message: `Lỗi định dạng JSON từ máy chủ (${response.status})` };
+            }
+        } else {
+            data = { error: 1, message: `Máy chủ không trả về dữ liệu (${response.status})` };
+        }
 
         if (!response.ok || data.error !== 0) {
             throw new Error(data.message || `Lỗi API ${endpoint}. Status: ${response.status}`);

@@ -4,10 +4,21 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const token = localStorage.getItem('token');
             const headers = {};
-            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (token && token !== 'undefined' && token !== 'null') headers['Authorization'] = `Bearer ${token}`;
 
             const res = await fetch(url, { headers });
-            const data = await res.json();
+            const rawText = await res.text().catch(() => '');
+            let data = {};
+            if (rawText && rawText.trim() !== '' && rawText.trim() !== 'undefined') {
+                try {
+                    data = JSON.parse(rawText);
+                } catch (parseErr) {
+                    data = { error: 1, message: `Lỗi định dạng JSON từ máy chủ (${res.status})` };
+                }
+            } else {
+                data = { error: 1, message: `Máy chủ không trả về dữ liệu (${res.status})` };
+            }
+
             if (data.error) throw new Error(data.message);
             return data.data;
         } catch (err) {

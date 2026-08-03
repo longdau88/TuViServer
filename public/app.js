@@ -26,6 +26,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const avatarPreviewImg = document.getElementById('avatar-preview-img');
     const avatarPlaceholderIcon = document.getElementById('avatar-placeholder-icon');
 
+    // Nav Avatar elements
+    const navUserProfile = document.getElementById('nav-user-profile');
+    const navAvatarBtn = document.getElementById('nav-avatar-btn');
+    const navAvatarImg = document.getElementById('nav-avatar-img');
+    const navAvatarPlaceholder = document.getElementById('nav-avatar-placeholder');
+
     // Dashboard elements
     const dashboardWelcomeTitle = document.getElementById('dashboard-welcome-title');
     const naviViewChart = document.getElementById('navi-view-chart');
@@ -41,6 +47,24 @@ document.addEventListener('DOMContentLoaded', function () {
     let webToken = null;
     let currentUser = null;
     let selectedAvatarBase64 = null;
+
+    // --- Helper: Update Top Right Nav Avatar ---
+    const updateNavAvatarUI = () => {
+        if (!currentUser) {
+            navUserProfile?.classList.add('d-none');
+            return;
+        }
+        navUserProfile?.classList.remove('d-none');
+        if (currentUser.avatar_url) {
+            navAvatarImg.src = currentUser.avatar_url;
+            navAvatarImg.classList.remove('d-none');
+            navAvatarPlaceholder.classList.add('d-none');
+        } else {
+            navAvatarImg.src = '';
+            navAvatarImg.classList.add('d-none');
+            navAvatarPlaceholder.classList.remove('d-none');
+        }
+    };
 
     // --- Screen Management ---
     const showScreen = (screenName) => {
@@ -64,14 +88,20 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             response = await fetch(API_URL + endpoint, { ...options, headers });
         } catch (networkError) {
-            // This will catch network errors, CORS issues, etc., that happen before a response is received.
-            throw new Error(`Lỗi mạng khi gọi API: ${endpoint}. Chi tiết: ${networkError.message}`);
+            throw new Error(`Lỗi kết nối máy chủ: ${networkError.message}`);
         }
 
-        const data = await response.json().catch(() => ({ 
-            message: `Lỗi phân tích JSON từ API: ${endpoint}. Status: ${response.status} ${response.statusText}`, 
-            error: 1 
-        }));
+        const rawText = await response.text().catch(() => '');
+        let data;
+        if (rawText && rawText.trim() !== '' && rawText.trim() !== 'undefined') {
+            try {
+                data = JSON.parse(rawText);
+            } catch (parseErr) {
+                data = { error: 1, message: `Lỗi định dạng JSON từ máy chủ (${response.status})` };
+            }
+        } else {
+            data = { error: 1, message: `Máy chủ không trả về dữ liệu (${response.status})` };
+        }
 
         if (!response.ok || data.error !== 0) {
             throw new Error(data.message || `Lỗi API ${endpoint}. Status: ${response.status}`);
@@ -87,26 +117,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- Navigation and Flow Control ---
     const goToDashboard = () => {
         dashboardWelcomeTitle.textContent = `Chào mừng, ${currentUser.full_name}!`;
+        updateNavAvatarUI();
         showScreen('dashboard');
     };
 
     const goToCreateUserScreen = () => {
-        userForm.reset();
-        resetAvatarUI();
-        userFormTitle.textContent = 'Tạo Hồ Sơ Của Bạn';
-        userFormSubtitle.textContent = 'Nhập thông tin chính xác để bắt đầu hành trình khám phá vận mệnh.';
-        submitButtonText.textContent = 'Tạo Hồ Sơ';
-        dashboardBackButton.classList.add('d-none');
-        showScreen('userForm');
+        window.location.href = '/create-user.html';
     };
     
     const goToUpdateUserScreen = () => {
-        populateForm(currentUser);
-        userFormTitle.textContent = 'Cập Nhật Thông Tin';
-        userFormSubtitle.textContent = 'Chỉnh sửa thông tin cá nhân của bạn.';
-        submitButtonText.textContent = 'Cập Nhật';
-        dashboardBackButton.classList.remove('d-none');
-        showScreen('userForm');
+        window.location.href = '/update-user.html';
     };
 
     const goToViewChart = async () => {
@@ -444,7 +464,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- App Initialization ---
     const initializeApp = async () => {
         showScreen('initialLoading');
-        if (!deviceId) {
+        if (!deviceId || deviceId === 'undefined' || deviceId === 'null') {
             deviceId = 'web-' + Date.now() + '-' + Math.random().toString(36).substring(2, 10);
             localStorage.setItem('deviceId', deviceId);
         }
@@ -452,6 +472,10 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const tokenData = await getWebToken();
             webToken = tokenData.access_token;
+            if (webToken) {
+                localStorage.setItem('webToken', webToken);
+                localStorage.setItem('token', webToken);
+            }
         } catch (error) {
             console.error("Lỗi nghiêm trọng khi khởi tạo ứng dụng:", error);
             const spinner = document.querySelector('#initial-loading-screen .spinner-border');
@@ -469,6 +493,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         userForm?.addEventListener('submit', handleFormSubmit);
         naviUpdateInfo?.addEventListener('click', goToUpdateUserScreen);
+        navAvatarBtn?.addEventListener('click', goToUpdateUserScreen);
         resultsBackButton?.addEventListener('click', goToDashboard);
         dashboardBackButton?.addEventListener('click', goToDashboard);
         document.getElementById('navbar-brand')?.addEventListener('click', (e) => {
@@ -514,8 +539,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 goToCreateUserScreen();
             }
         } catch (error) {
-            console.warn('Could not check for existing device, directing to user creation.', error.message);
-            goToCreateUserScreen();
+            console.error('Lỗi khi kiểm tra thông tin thiết bị:', error.message);
+            const spinner = document.querySelector('#initial-loading-screen .spinner-border');
+            const loadingText = document.querySelector('#initial-loading-screen h3');
+            const errorContainer = document.getElementById('initial-error');
+
+            if(spinner) spinner.classList.add('d-none');
+            if(loadingText) loadingText.textContent = 'Lỗi Kết Nối Máy Chủ';
+            if(errorContainer) {
+                errorContainer.textContent = `Lỗi kết nối máy chủ: ${error.message}. Vui lòng kiểm tra lại kết nối hoặc thử lại sau.`;
+                errorContainer.classList.remove('d-none');
+            }
         }
     };
 

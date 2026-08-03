@@ -358,6 +358,170 @@
               ]
             }
           }
+        },
+        {
+          "name": "POST /api/user/cache/clear-all",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/user/cache/clear-all",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "cache",
+                "clear-all"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Calendar",
+      "item": [
+        {
+          "name": "GET /api/calendar/today",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/calendar/today",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "calendar",
+                "today"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/calendar/month",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/calendar/month?year=2026&month=8",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "calendar",
+                "month"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2026"
+                },
+                {
+                  "key": "month",
+                  "value": "8"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/calendar/year",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/calendar/year?year=2026",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "calendar",
+                "year"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2026"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/calendar/grid",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/calendar/grid?year=2026&month=8",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "calendar",
+                "grid"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2026"
+                },
+                {
+                  "key": "month",
+                  "value": "8"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/calendar/convert",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/calendar/convert?date=2026-08-03&type=solar2lunar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "calendar",
+                "convert"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-08-03",
+                  "description": "YYYY-MM-DD"
+                },
+                {
+                  "key": "type",
+                  "value": "solar2lunar",
+                  "description": "solar2lunar hoặc lunar2solar"
+                },
+                {
+                  "key": "isLeap",
+                  "value": "false",
+                  "description": "Chỉ dùng khi type=lunar2solar (true/false)",
+                  "disabled": true
+                }
+              ]
+            }
+          }
         }
       ]
     }

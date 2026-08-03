@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bói Hợp Tuổi / Tử Vi Đôi - Tử Vi Vận Mệnh</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        .compatibility-card {
+            background-color: rgba(28, 22, 66, 0.65);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.25rem;
+        }
+
+        .person-box {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 1rem;
+            padding: 1.25rem;
+        }
+
+        .score-badge-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            margin: 0 auto;
+            border: 4px solid var(--secondary-color);
+            box-shadow: 0 0 25px rgba(253, 216, 53, 0.35);
+            background: radial-gradient(circle, rgba(94, 53, 177, 0.4) 0%, rgba(15, 12, 41, 0.85) 100%);
+        }
+
+        .score-number {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .score-max {
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            height: 100%;
+        }
+
+        .metric-score-tag {
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+        }
+
+        .badge-good {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.4);
+        }
+
+        .badge-bad {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.4);
+        }
+
+        .badge-neutral {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.4);
+        }
+
+        .rel-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            height: 100%;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .rel-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(253, 216, 53, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-stars"></i>
+                Tử Vi Vận Mệnh
+            </a>
+        </div>
+    </nav>
+
+    <main class="container my-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap welcome-header">
+            <div>
+                <h1 class="mb-1 display-5">Bói Hợp Tuổi / Tử Vi Đôi</h1>
+                <p class="lead mb-0 text-muted">Phân tích xung hợp Tử Vi & Phong Thủy toàn diện giữa 2 người</p>
+            </div>
+            <a href="/" class="btn btn-outline-secondary mt-2 mt-md-0">
+                <i class="bi bi-arrow-left"></i> Về Bảng điều khiển
+            </a>
+        </div>
+
+        <!-- Form Screen -->
+        <section id="form-section">
+            <div class="card compatibility-card shadow p-3 p-md-4 mb-4">
+                <form id="compatibility-form">
+                    <div class="row g-4">
+                        <!-- Person 1 -->
+                        <div class="col-md-6">
+                            <div class="person-box h-100">
+                                <h4 class="text-info mb-3">
+                                    <i class="bi bi-person-circle"></i> Người Thứ Nhất
+                                </h4>
+                                <div class="mb-3">
+                                    <label for="p1-name" class="form-label">Họ và tên</label>
+                                    <input type="text" class="form-control" id="p1-name" placeholder="Ví dụ: Nguyễn Văn A" required>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-7">
+                                        <label for="p1-birthday" class="form-label">Ngày sinh (Dương lịch)</label>
+                                        <input type="date" class="form-control" id="p1-birthday" required>
+                                    </div>
+                                    <div class="col-5">
+                                        <label for="p1-birthtime" class="form-label">Giờ sinh</label>
+                                        <input type="time" class="form-control" id="p1-birthtime" value="08:00" required>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="form-label d-block">Giới tính</label>
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="p1-gender" id="p1-male" value="nam" checked>
+                                        <label class="btn btn-outline-info" for="p1-male">Nam</label>
+                                        <input type="radio" class="btn-check" name="p1-gender" id="p1-female" value="nu">
+                                        <label class="btn btn-outline-info" for="p1-female">Nữ</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Person 2 -->
+                        <div class="col-md-6">
+                            <div class="person-box h-100">
+                                <h4 class="text-danger mb-3">
+                                    <i class="bi bi-person-heart"></i> Người Thứ Hai
+                                </h4>
+                                <div class="mb-3">
+                                    <label for="p2-name" class="form-label">Họ và tên</label>
+                                    <input type="text" class="form-control" id="p2-name" placeholder="Ví dụ: Trần Thị B" required>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-7">
+                                        <label for="p2-birthday" class="form-label">Ngày sinh (Dương lịch)</label>
+                                        <input type="date" class="form-control" id="p2-birthday" required>
+                                    </div>
+                                    <div class="col-5">
+                                        <label for="p2-birthtime" class="form-label">Giờ sinh</label>
+                                        <input type="time" class="form-control" id="p2-birthtime" value="14:00" required>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="form-label d-block">Giới tính</label>
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="p2-gender" id="p2-male" value="nam">
+                                        <label class="btn btn-outline-danger" for="p2-male">Nam</label>
+                                        <input type="radio" class="btn-check" name="p2-gender" id="p2-female" value="nu" checked>
+                                        <label class="btn btn-outline-danger" for="p2-female">Nữ</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="mt-4 text-center">
+                        <button type="submit" class="btn btn-primary btn-lg px-5 py-3 rounded-pill fw-bold shadow" id="btn-submit">
+                            <i class="bi bi-magic me-2"></i> Phân Tích Độ Hợp Tuổi Toàn Diện
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Loading Section -->
+        <section id="loading-section" class="d-none text-center my-5">
+            <div class="spinner-border text-warning" style="width: 3.5rem; height: 3.5rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h3 class="mt-4 text-white">Đang phân tích dữ liệu 2 lá số...</h3>
+            <p class="text-muted">Đang đối chiếu Ngũ Hành, Can Chi, Bát Trạch và Tứ Trụ cho tất cả phương diện.</p>
+        </section>
+
+        <!-- Results Section -->
+        <section id="results-section" class="d-none">
+            <!-- Overall Result Card -->
+            <div class="card compatibility-card shadow p-4 text-center mb-4">
+                <h5 class="text-uppercase text-warning letter-spacing-1 mb-3">KẾT QUẢ ĐÁNH GIÁ TỔNG QUAN</h5>
+                <div class="score-badge-circle mb-3">
+                    <span class="score-number" id="res-score">--</span>
+                    <span class="score-max">/ 100 ĐIỂM</span>
+                </div>
+                <h3 class="text-warning fw-bold mb-2" id="res-rating-label">--</h3>
+                <p class="lead text-white opacity-90 mx-auto" style="max-width: 750px;" id="res-summary">--</p>
+
+                <div class="row g-3 mt-3 pt-3 border-top border-secondary">
+                    <div class="col-md-6">
+                        <div class="p-2 border border-secondary rounded">
+                            <span class="text-info fw-bold" id="res-p1-name">--</span>:
+                            <span class="text-white" id="res-p1-details">--</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-2 border border-secondary rounded">
+                            <span class="text-danger fw-bold" id="res-p2-name">--</span>:
+                            <span class="text-white" id="res-p2-details">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5 Metric Details Grid -->
+            <h3 class="mb-3 text-warning"><i class="bi bi-bar-chart-steps me-2"></i> 1. Chi Tiết Phân Tích 5 Tiêu Chí Cốt Lõi</h3>
+            <div class="row g-3 mb-5">
+                <!-- 1. Ngũ Hành -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="metric-card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0 text-info"><i class="bi bi-fire me-1"></i> Ngũ Hành Nạp Âm</h5>
+                            <span class="metric-score-tag badge-good" id="tag-ngu-hanh">80 / 100</span>
+                        </div>
+                        <p class="small text-muted mb-2" id="rel-ngu-hanh">Tương Sinh</p>
+                        <p class="text-white small mb-0" id="detail-ngu-hanh">--</p>
+                    </div>
+                </div>
+
+                <!-- 2. Can Chi -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="metric-card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0 text-info"><i class="bi bi-calendar3 me-1"></i> Can Chi Năm Sinh</h5>
+                            <span class="metric-score-tag badge-good" id="tag-can-chi">80 / 100</span>
+                        </div>
+                        <p class="small text-muted mb-2" id="rel-can-chi">Tam Hợp</p>
+                        <p class="text-white small mb-0" id="detail-can-chi">--</p>
+                    </div>
+                </div>
+
+                <!-- 3. Cung Phi -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="metric-card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0 text-info"><i class="bi bi-compass me-1"></i> Cung Phi Bát Trạch</h5>
+                            <span class="metric-score-tag badge-good" id="tag-cung-phi">80 / 100</span>
+                        </div>
+                        <p class="small text-muted mb-2" id="rel-cung-phi">Quẻ Sinh Khí</p>
+                        <p class="text-white small mb-0" id="detail-cung-phi">--</p>
+                    </div>
+                </div>
+
+                <!-- 4. Tử Vi Stars -->
+                <div class="col-md-6 col-lg-6">
+                    <div class="metric-card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0 text-info"><i class="bi bi-star me-1"></i> Tử Vi Mệnh & Chính Tinh</h5>
+                            <span class="metric-score-tag badge-good" id="tag-tu-vi">75 / 100</span>
+                        </div>
+                        <p class="text-white small mb-0" id="detail-tu-vi">--</p>
+                    </div>
+                </div>
+
+                <!-- 5. Tứ Trụ Balance -->
+                <div class="col-md-6 col-lg-6">
+                    <div class="metric-card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0 text-info"><i class="bi bi-diagram-3 me-1"></i> Tứ Trụ & Bổ Trừ Dụng Thần</h5>
+                            <span class="metric-score-tag badge-good" id="tag-tu-tru">70 / 100</span>
+                        </div>
+                        <p class="text-white small mb-0" id="detail-tu-tru">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All 4 Relationship Insights Grid -->
+            <h3 class="mb-3 text-warning"><i class="bi bi-compass-fill me-2"></i> 2. Phân Tích Chi Tiết Cho Tất Cả Phương Diện Mối Quan Hệ</h3>
+            <div class="row g-4 mb-5" id="relationship-insights-container">
+                <!-- Dynamic relationship cards rendered by JS -->
+            </div>
+
+            <!-- Phong Thủy Recommendations & Remedies -->
+            <div class="card compatibility-card shadow p-4 mb-4">
+                <h3 class="text-warning mb-3"><i class="bi bi-shield-check me-2"></i> 3. Giải Pháp Phong Thủy Hóa Giải Xung Khắc</h3>
+                <div id="remedies-container">
+                    <!-- Dynamic alert remedies -->
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="text-center mb-5">
+                <button class="btn btn-outline-light btn-lg me-2" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <i class="bi bi-arrow-up me-1"></i> Phân Tích Cặp Tuổi Khác
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer mt-auto py-3 text-center">
+        <div class="container">
+            <span class="text-muted">&copy; 2024 Tử Vi Vận Mệnh. All Rights Reserved.</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="tu-vi-doi.js"></script>
+</body>
+
+</html>
