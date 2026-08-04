@@ -794,6 +794,15 @@
                     <div class="section-title"><i class="fa-solid fa-chart-column"
                             style="color: var(--accent-gold);"></i> Thống Kê Gói Cước Đang Dùng</div>
                     <div class="search-box">
+                        <input type="text" id="vipUsageSearchInput" class="search-input"
+                            placeholder="Tìm tên, email, mã gói...">
+                        <select id="vipUsagePackageFilter" class="search-input" style="min-width: 220px;"></select>
+                        <button class="btn" onclick="applyVipUsageFilters()"><i
+                                class="fa-solid fa-magnifying-glass"></i>
+                            Lọc</button>
+                        <button class="btn btn-purple" onclick="resetVipUsageFilters()"><i
+                                class="fa-solid fa-eraser"></i>
+                            Xóa Lọc</button>
                         <button class="btn btn-purple" onclick="loadStats()"><i class="fa-solid fa-rotate"></i> Làm Mới
                             Dữ Liệu</button>
                     </div>
@@ -1017,6 +1026,7 @@
         window.usersStore = {};
         window.vipPackageStore = [];
         window.vipPackageUsage = { packageSummary: [], users: [] };
+        window.vipPackageUsageFilters = { packageCode: '', search: '' };
 
         function formatLocalDateOnlyVI(value) {
             if (!value) return '';
@@ -1141,7 +1151,7 @@
             } else if (tabId === 'revenueTab') {
                 loadRevenueTransactions();
             } else if (tabId === 'vipUsageTab') {
-                renderVipPackageUsageStats();
+                loadStats();
             }
         }
 
@@ -1190,9 +1200,51 @@
             loadKnowledge();
         }
 
+        function syncVipUsagePackageFilterOptions(packages = []) {
+            const select = document.getElementById('vipUsagePackageFilter');
+            if (!select) return;
+
+            const currentValue = select.value || window.vipPackageUsageFilters.packageCode || '';
+            const sourcePackages = packages.length > 0 ? packages : (window.vipPackageStore || []);
+
+            select.innerHTML = ['<option value="">Tất cả gói cước</option>']
+                .concat(sourcePackages.map((pkg) => `<option value="${pkg.code}">${pkg.code} - ${pkg.name}</option>`))
+                .join('');
+            select.value = currentValue;
+        }
+
+        function applyVipUsageFilters() {
+            const searchInput = document.getElementById('vipUsageSearchInput');
+            const packageSelect = document.getElementById('vipUsagePackageFilter');
+            window.vipPackageUsageFilters = {
+                search: searchInput ? searchInput.value.trim() : '',
+                packageCode: packageSelect ? packageSelect.value : '',
+            };
+            loadStats();
+        }
+
+        function resetVipUsageFilters() {
+            const searchInput = document.getElementById('vipUsageSearchInput');
+            const packageSelect = document.getElementById('vipUsagePackageFilter');
+            if (searchInput) searchInput.value = '';
+            if (packageSelect) packageSelect.value = '';
+            window.vipPackageUsageFilters = { packageCode: '', search: '' };
+            loadStats();
+        }
+
         async function loadStats() {
             try {
-                const res = await fetch('/api/admin/stats', { headers: getAuthHeaders() });
+                const searchInput = document.getElementById('vipUsageSearchInput');
+                const packageSelect = document.getElementById('vipUsagePackageFilter');
+                const activeSearch = searchInput ? searchInput.value.trim() : (window.vipPackageUsageFilters.search || '');
+                const activePackageCode = packageSelect ? packageSelect.value : (window.vipPackageUsageFilters.packageCode || '');
+                window.vipPackageUsageFilters = { search: activeSearch, packageCode: activePackageCode };
+
+                const query = new URLSearchParams();
+                if (activeSearch) query.set('search', activeSearch);
+                if (activePackageCode) query.set('package_code', activePackageCode);
+
+                const res = await fetch(`/api/admin/stats${query.toString() ? `?${query.toString()}` : ''}`, { headers: getAuthHeaders() });
                 if (res.status === 401 || res.status === 403) {
                     handleLogout();
                     return;
@@ -1204,6 +1256,7 @@
                     document.getElementById('statRevenue').innerText = (json.data.totalRevenue || 0).toLocaleString('vi-VN') + 'đ';
                     document.getElementById('statKnowledge').innerText = json.data.totalKnowledge || 0;
                     window.vipPackageUsage = json.data.vipPackageUsage || { packageSummary: [], users: [] };
+                    syncVipUsagePackageFilterOptions(json.data.vipPackageUsage && json.data.vipPackageUsage.availablePackages ? json.data.vipPackageUsage.availablePackages : []);
                     renderVipPackageUsageStats();
                 }
             } catch (err) {
@@ -1224,7 +1277,7 @@
                     <div class="stat-card">
                         <div class="stat-icon purple"><i class="fa-solid fa-gem"></i></div>
                         <div class="stat-info">
-                            <h3>Chưa có user VIP</h3>
+                            <h3>Không có kết quả</h3>
                             <p>0</p>
                         </div>
                     </div>
@@ -1234,7 +1287,7 @@
                     <div class="stat-card" title="${item.package_label}">
                         <div class="stat-icon purple"><i class="fa-solid fa-gem"></i></div>
                         <div class="stat-info">
-                            <h3>${item.package_label}</h3>
+                            <h3>${item.package_code ? `${item.package_code} - ${item.package_name || 'N/A'}` : item.package_label}</h3>
                             <p>${item.user_count} user</p>
                         </div>
                     </div>
@@ -1242,7 +1295,7 @@
             }
 
             if (users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Chưa có tài khoản nào đang dùng gói VIP.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Chưa có tài khoản nào đang dùng gói VIP phù hợp với bộ lọc hiện tại.</td></tr>`;
                 return;
             }
 
@@ -1250,7 +1303,7 @@
                 <tr>
                     <td><strong>${user.full_name || 'N/A'}</strong><br><small style="color: var(--text-muted);">#${user.id}</small></td>
                     <td>${user.email || 'N/A'}</td>
-                    <td><span class="badge badge-vip">${user.package_name || user.package_code || 'Gói VIP'}</span></td>
+                    <td><span class="badge badge-vip">${user.package_code || 'N/A'}</span><br><small style="color: var(--text-muted);">${user.package_name || 'Gói VIP'}</small></td>
                     <td>${user.vip_expires_at ? formatLocalDateOnlyVI(user.vip_expires_at) : 'Vĩnh viễn'}</td>
                     <td>${user.ai_quota} lượt/ngày</td>
                 </tr>

@@ -635,13 +635,33 @@ const getAdminStats = async () => {
     };
 };
 
-const getVipPackageUsageStats = async () => {
-    const [rows] = await pool.query(`
+const getVipPackageUsageStats = async ({ packageCode = '', search = '' } = {}) => {
+    const [packages] = await pool.query(`
+        SELECT code, name, ai_quota, duration_days, price, description
+        FROM vip_packages
+        ORDER BY price ASC, code ASC
+    `);
+
+    let sql = `
         SELECT id, full_name, email, package_code, package_name, vip_expires_at, ai_quota, created_at
         FROM users
         WHERE is_vip = 1
-        ORDER BY COALESCE(package_name, package_code, full_name) ASC, full_name ASC, id DESC
-    `);
+    `;
+    const params = [];
+
+    if (packageCode) {
+        sql += ` AND package_code = ?`;
+        params.push(packageCode);
+    }
+
+    if (search) {
+        sql += ` AND (full_name LIKE ? OR email LIKE ? OR package_code LIKE ? OR package_name LIKE ?)`;
+        params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    sql += ` ORDER BY COALESCE(package_code, package_name, full_name) ASC, full_name ASC, id DESC`;
+
+    const [rows] = await pool.query(sql, params);
 
     const users = rows.map((row) => ({
         id: row.id,
@@ -654,27 +674,52 @@ const getVipPackageUsageStats = async () => {
         created_at: row.created_at,
     }));
 
+    const packageMap = packages.reduce((accumulator, pkg) => {
+        accumulator[pkg.code] = pkg;
+        return accumulator;
+    }, {});
+
     const grouped = users.reduce((accumulator, user) => {
-        const label = user.package_name || user.package_code || 'Gói chưa xác định';
-        if (!accumulator[label]) {
-            accumulator[label] = {
-                package_label: label,
+        const resolvedCode = user.package_code || 'UNKNOWN';
+        const resolvedPackage = packageMap[resolvedCode] || null;
+        const label = resolvedPackage
+            ? `${resolvedPackage.code} · ${resolvedPackage.name}`
+            : (user.package_name || user.package_code || 'Gói chưa xác định');
+
+        if (!accumulator[resolvedCode]) {
+            accumulator[resolvedCode] = {
                 package_code: user.package_code || null,
-                package_name: user.package_name || null,
+                package_name: resolvedPackage ? resolvedPackage.name : (user.package_name || null),
+                package_label: label,
                 user_count: 0,
                 users: [],
             };
         }
 
-        accumulator[label].user_count += 1;
-        accumulator[label].users.push(user);
+        accumulator[resolvedCode].user_count += 1;
+        accumulator[resolvedCode].users.push(user);
         return accumulator;
     }, {});
 
+    const packageSummary = Object.values(grouped).sort((left, right) => {
+        if (right.user_count !== left.user_count) {
+            return right.user_count - left.user_count;
+        }
+        return String(left.package_code || left.package_label).localeCompare(String(right.package_code || right.package_label));
+    });
+
     return {
         totalVipUsers: users.length,
-        packageSummary: Object.values(grouped).sort((left, right) => right.user_count - left.user_count || left.package_label.localeCompare(right.package_label)),
+        packageSummary,
         users,
+        availablePackages: packages.map((pkg) => ({
+            code: pkg.code,
+            name: pkg.name,
+            ai_quota: pkg.ai_quota,
+            duration_days: pkg.duration_days,
+            price: Number(pkg.price || 0),
+            description: pkg.description || '',
+        })),
     };
 };
 

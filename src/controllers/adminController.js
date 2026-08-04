@@ -81,8 +81,10 @@ exports.login = async (req, res) => {
  */
 exports.getStats = async (req, res) => {
     try {
+        const packageCode = req.query.package_code || '';
+        const search = req.query.search || '';
         const stats = await getAdminStats();
-        const vipPackageUsage = await getVipPackageUsageStats();
+        const vipPackageUsage = await getVipPackageUsageStats({ packageCode, search });
         const knowledgeList = aiKnowledgeService.getAllKnowledge();
 
         return res.json({
