@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bảng Giá Gói Cước VIP - Tử Vi Vận Mệnh</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        .pricing-card {
+            background-color: rgba(28, 22, 66, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            transition: all 0.35s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--secondary-color);
+            box-shadow: 0 12px 30px rgba(253, 216, 53, 0.25);
+        }
+
+        .pricing-card.popular {
+            border: 2px solid var(--secondary-color);
+            box-shadow: 0 8px 25px rgba(253, 216, 53, 0.3);
+            background: linear-gradient(180deg, rgba(94, 53, 177, 0.4), rgba(28, 22, 66, 0.85));
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #fdd835, #f57f17);
+            color: #000;
+            font-weight: 700;
+            font-size: 0.82rem;
+            padding: 0.35rem 1.2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .price-text {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+        }
+
+        .price-period {
+            font-size: 0.9rem;
+            color: var(--text-muted-color);
+        }
+
+        .btn-vip-checkout {
+            background: linear-gradient(135deg, #fdd835, #f57f17);
+            color: #000;
+            font-weight: 700;
+            border: none;
+            padding: 0.85rem 1.5rem;
+            border-radius: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-vip-checkout:hover {
+            transform: scale(1.03);
+            color: #000;
+            box-shadow: 0 6px 20px rgba(253, 216, 53, 0.4);
+        }
+
+        .qr-placeholder {
+            background: #ffffff;
+            padding: 1rem;
+            border-radius: 1rem;
+            display: inline-block;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-content {
+            background-color: rgba(28, 22, 66, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--secondary-color);
+            color: #fff;
+            border-radius: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-stars"></i>
+                Tử Vi Vận Mệnh
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="container my-4">
+        <!-- Sub-header -->
+        <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap welcome-header">
+            <div>
+                <h1 class="mb-1 display-5 text-warning"><i class="bi bi-crown me-2"></i>Nâng Cấp Gói Cước VIP</h1>
+                <p class="lead mb-0 text-light">Mở khóa trọn bộ 12 Cung Tử Vi, Trợ lý AI không giới hạn & Lịch Ngày Tốt Xấu</p>
+            </div>
+            <button onclick="goBackOrHome()" class="btn btn-outline-secondary mt-2 mt-md-0">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </button>
+        </div>
+
+
+        <!-- No Auto-Renew Notice Banner -->
+        <div class="alert alert-warning border border-warning mb-4 shadow text-dark fw-semibold d-flex align-items-center gap-2" style="background: rgba(253, 216, 53, 0.95); border-radius: 1rem;">
+            <i class="bi bi-shield-check fs-4 text-dark me-1"></i>
+            <div>
+                <strong>Chính sách minh bạch 100%:</strong> Các gói cước VIP <u class="fw-bold">KHÔNG tự động trừ tiền gia hạn</u> khi hết hạn. Khi hết thời hạn VIP, bạn hoàn toàn chủ động tự chọn và thanh toán gói mới để nâng cấp lại!
+            </div>
+        </div>
+
+        <!-- Dynamic Package Cards Grid -->
+
+        <div class="row g-4 mb-5" id="packagesGrid">
+            <!-- Loaded dynamically via JS -->
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-light">Đang tải bảng giá gói cước mới nhất từ hệ thống...</p>
+            </div>
+        </div>
+
+        <!-- VIP Benefits Showcase -->
+        <div class="custom-card shadow p-4 rounded-4" style="background: rgba(28, 22, 66, 0.65); border: 1px solid rgba(255,255,255,0.1);">
+            <h4 class="text-warning mb-4 text-center"><i class="bi bi-gem me-2"></i>So Sánh Đặc Quyền Gói Miễn Phí vs VIP</h4>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0 text-center align-middle">
+                    <thead>
+                        <tr>
+                            <th class="text-start text-warning">Tính Năng Hỗ Trợ</th>
+                            <th class="text-muted">Tài Khoản Thường 🆓</th>
+                            <th class="text-warning fw-bold fs-6">Tài Khoản VIP 👑</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-start">Trò chuyện Trợ Lý AI Tử Vi 24/7</td>
+                            <td class="text-muted">Giới hạn 3 câu/ngày</td>
+                            <td class="text-warning fw-bold"><i class="bi bi-check-circle-fill me-1"></i> KHÔNG GIỚI HẠN</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start">Xem Lá Số Tử Vi Chi Tiết</td>
+                            <td class="text-muted">Chỉ xem 3 Cung chính</td>
+                            <td class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i> Trọn bộ 12 Cung & Đại vận 10 năm</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start">Lịch Ngày Tốt Xấu Cá Nhân Hóa</td>
+                            <td class="text-muted">Top 3 ngày tốt nhất</td>
+                            <td class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i> Toàn bộ lịch ngày tốt cả năm</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start">Lịch Sử Bốc Quẻ Kinh Dịch</td>
+                            <td class="text-muted">Lưu 3 quẻ gần nhất</td>
+                            <td class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i> Lưu trữ lịch sử trọn đời</td>
+                        </tr>
+                        <tr>
+                            <td class="text-start">Yếu Tố Xung Kỵ & Hướng Kỵ Xuất Hành</td>
+                            <td class="text-muted">Cơ bản</td>
+                            <td class="text-warning fw-bold"><i class="bi bi-check-circle-fill me-1"></i> Tính toán chi tiết 100%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Payment / Checkout Modal -->
+    <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-warning" id="modalPackageName"><i class="bi bi-qr-code-scan me-2"></i>Thanh Toán Gói VIP</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <p class="text-light mb-1">Số tiền thanh toán:</p>
+                    <div class="price-text mb-3" id="modalPrice">99.000đ</div>
+
+                    <!-- VietQR Bank Transfer Info -->
+                    <div class="qr-placeholder mb-3">
+                        <img id="qrImage" src="https://api.vietqr.io/image/970422-999988889999-compact2.png?amount=99000&addInfo=VIP%20TUVI" alt="QR Thanh Toan VietQR" class="img-fluid" style="max-width: 220px;" />
+                    </div>
+
+                    <div class="p-3 rounded mb-3 text-start style-box" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);">
+                        <div class="small text-muted mb-1">Ngân hàng: <strong class="text-white">MBBank (Ngân hàng Quân Đội)</strong></div>
+                        <div class="small text-muted mb-1">Số tài khoản: <strong class="text-warning fs-6" id="modalSTK">999988889999</strong></div>
+                        <div class="small text-muted mb-1">Chủ tài khoản: <strong class="text-white">TU VI VAN MENH SERVER</strong></div>
+                        <div class="small text-muted mb-0">Cú pháp chuyển khoản: <strong class="text-warning fs-6" id="modalSyntax">VIP_1M_DEV123</strong></div>
+                    </div>
+
+                    <button class="btn btn-vip-checkout w-100 py-2" onclick="confirmPayment()">
+                        <i class="bi bi-check-circle-fill me-1"></i> XÁC NHẬN ĐÃ CHUYỂN KHOẢN
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3 text-center">
+        <div class="container">
+            <span>&copy; <script>document.write(new Date().getFullYear())</script> Tử Vi Vận Mệnh. All Rights Reserved.</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const deviceId = localStorage.getItem('tuvi_device_id') || localStorage.getItem('deviceId') || `dev_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('tuvi_device_id', deviceId);
+
+        let selectedPkg = null;
+        let checkoutModalInstance = null;
+
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        }
+
+        async function loadPackages() {
+            try {
+                const res = await fetch('/api/user/packages');
+                const json = await res.json();
+                const grid = document.getElementById('packagesGrid');
+
+                if (json.status === 200 && json.data && json.data.length > 0) {
+                    const list = json.data;
+                    grid.innerHTML = list.map((pkg, idx) => {
+                        const isPopular = pkg.is_popular || idx === 1;
+                        const featuresList = pkg.features && Array.isArray(pkg.features) ? pkg.features : [
+                            'Trò chuyện AI Tử Vi không giới hạn',
+                            'Xem trọn bộ 12 Cung Lá số Tử Vi',
+                            'Lịch ngày tốt xấu & Giờ Hoàng Đạo',
+                            'Lưu vết lịch sử bốc quẻ trọn đời'
+                        ];
+
+                        return `
+                            <div class="col-lg-3 col-md-6">
+                                <div class="pricing-card ${isPopular ? 'popular' : ''}">
+                                    ${isPopular ? '<div class="popular-badge"><i class="bi bi-fire me-1"></i>PHỔ BIẾN NHẤT</div>' : ''}
+                                    <h4 class="fw-bold mb-2 text-warning">${pkg.name}</h4>
+                                    <div class="mb-3">
+                                        <span class="price-text">${formatMoney(pkg.price)}</span>
+                                        <span class="price-period">/ ${pkg.duration_days >= 3650 ? 'Trọn đời' : `${pkg.duration_days} ngày`}</span>
+                                    </div>
+                                    <ul class="list-unstyled mb-4 flex-grow-1" style="font-size: 0.9rem;">
+                                        ${featuresList.map(f => `<li class="mb-2 text-light"><i class="bi bi-check-circle-fill text-warning me-2"></i>${f}</li>`).join('')}
+                                    </ul>
+                                    <button class="btn btn-vip-checkout w-100 mt-auto" onclick="openCheckoutModal(${idx})">
+                                        <i class="bi bi-stars me-1"></i> CHỌN GÓI NÀY
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    window.packagesList = list;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function openCheckoutModal(index) {
+            const pkg = (window.packagesList || [])[index];
+            if (!pkg) return;
+
+            selectedPkg = pkg;
+            const priceFormatted = formatMoney(pkg.price);
+            const syntaxStr = `VIP_${(pkg.code || 'VIP').toUpperCase()}_${deviceId.slice(-6)}`;
+
+            document.getElementById('modalPackageName').innerText = `Thanh Toán: ${pkg.name}`;
+            document.getElementById('modalPrice').innerText = priceFormatted;
+            document.getElementById('modalSyntax').innerText = syntaxStr;
+
+            // Generate VietQR Image URL
+            const qrUrl = `https://api.vietqr.io/image/970422-999988889999-compact2.png?amount=${pkg.price}&addInfo=${encodeURIComponent(syntaxStr)}`;
+            document.getElementById('qrImage').src = qrUrl;
+
+            checkoutModalInstance = new bootstrap.Modal(document.getElementById('checkoutModal'));
+            checkoutModalInstance.show();
+        }
+
+        function confirmPayment() {
+            if (checkoutModalInstance) checkoutModalInstance.hide();
+            alert('Hệ thống đã nhận thông báo thanh toán của bạn!\nĐội ngũ Admin sẽ duyệt và kích hoạt gói cước VIP tự động trong vòng vài phút.');
+        }
+
+        function goBackOrHome() {
+            if (document.referrer && document.referrer.indexOf(window.location.host) !== -1 && !document.referrer.endsWith('/goi-cuoc.html')) {
+                window.history.back();
+            } else {
+                window.location.href = '/';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadPackages);
+
+    </script>
+</body>
+
+</html>

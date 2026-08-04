@@ -1,5 +1,7 @@
 const divinationService = require('../services/divinationService');
 const { findUserById, findUserByDeviceId } = require('../models/userModel');
+const { isVipUser } = require('../middleware/vipMiddleware');
+
 
 /**
  * Draw daily hexagram for user
@@ -48,12 +50,27 @@ exports.getHistory = async (req, res) => {
         const limit = Number(req.query.limit) || 20;
         const offset = Number(req.query.offset) || 0;
 
-        const history = await divinationService.getUserDivinationHistory({ user_id, device_id, limit, offset });
+        let userProfile = null;
+        if (user_id) {
+            userProfile = await findUserById(user_id);
+        } else if (device_id) {
+            userProfile = await findUserByDeviceId(device_id);
+        }
+
+        const isVip = isVipUser(userProfile);
+        let history = await divinationService.getUserDivinationHistory({ user_id, device_id, limit, offset });
+
+        if (!isVip && history.length > 3) {
+            history = history.slice(0, 3);
+        }
+
 
         return res.json({
             status: 200,
             error: 0,
             message: 'OK',
+            is_vip_limited: !isVip,
+            vip_upsell_message: !isVip ? 'Tài khoản Miễn Phí chỉ xem được 3 quẻ gần nhất. Nâng cấp VIP để xem lịch sử trọn đời!' : null,
             data: history
         });
     } catch (err) {
@@ -61,6 +78,7 @@ exports.getHistory = async (req, res) => {
         return res.status(500).json({ status: 500, error: 1, message: 'Lỗi lấy lịch sử bốc quẻ' });
     }
 };
+
 
 /**
  * Get all 64 hexagrams reference

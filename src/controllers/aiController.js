@@ -1,6 +1,9 @@
 const aiHoroscopeService = require('../services/aiHoroscopeService');
 const aiKnowledgeService = require('../services/aiKnowledgeService');
+const cacheService = require('../services/cacheService');
 const { findUserByDeviceId, findUserById } = require('../models/userModel');
+const { isVipUser } = require('../middleware/vipMiddleware');
+
 
 /**
  * Controller: Chat with AI Horoscope Assistant (Cross-Platform API)
@@ -22,7 +25,40 @@ exports.chatWithAi = async (req, res) => {
             });
         }
 
-        // Resolve user profile
+        // Resolve user profile & Check VIP Quota
+        const deviceId = body.device_id || query.device_id || req.headers['x-device-id'];
+        const userId = req.user ? req.user.id : (body.user_id || query.user_id);
+        let dbUser = null;
+        if (userId) {
+            dbUser = await findUserById(userId);
+        } else if (deviceId) {
+            dbUser = await findUserByDeviceId(deviceId);
+        }
+
+        const isVip = isVipUser(dbUser);
+
+        // Daily Quota Enforcement for Free Users
+        if (!isVip) {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const identifier = userId ? `user_${userId}` : (deviceId ? `dev_${deviceId}` : 'guest');
+            const quotaKey = `ai_quota:${identifier}:${todayStr}`;
+            const usedCount = (await cacheService.get(quotaKey)) || 0;
+
+            if (usedCount >= 3) {
+                return res.status(403).json({
+                    status: 403,
+                    error: 1,
+                    code: 'VIP_REQUIRED',
+                    is_vip_required: true,
+                    message: 'Tài khoản Miễn Phí đã dùng hết 3 lượt hỏi Trợ Lý AI trong ngày. Vui lòng nâng cấp Gói Cước VIP để trò chuyện không giới hạn!',
+                    upgrade_url: '/goi-cuoc.html',
+
+                    remaining_quota: 0
+                });
+            }
+            await cacheService.set(quotaKey, usedCount + 1, 86400);
+        }
+
         let personInput = null;
 
         if (body.person && body.person.birthday && body.person.birth_time && body.person.gender) {
@@ -34,25 +70,13 @@ exports.chatWithAi = async (req, res) => {
                 birth_time: body.birth_time,
                 gender: body.gender,
             };
-        } else {
-            const userId = body.user_id || query.user_id;
-            const deviceId = body.device_id || query.device_id;
-
-            let dbUser = null;
-            if (userId) {
-                dbUser = await findUserById(userId);
-            } else if (deviceId) {
-                dbUser = await findUserByDeviceId(deviceId);
-            }
-
-            if (dbUser && dbUser.birthday && dbUser.birth_time && dbUser.gender) {
-                personInput = {
-                    full_name: dbUser.full_name || 'Người dùng',
-                    birthday: dbUser.birthday,
-                    birth_time: dbUser.birth_time,
-                    gender: dbUser.gender,
-                };
-            }
+        } else if (dbUser && dbUser.birthday && dbUser.birth_time && dbUser.gender) {
+            personInput = {
+                full_name: dbUser.full_name || 'Người dùng',
+                birthday: dbUser.birthday,
+                birth_time: dbUser.birth_time,
+                gender: dbUser.gender,
+            };
         }
 
         if (!personInput) {
@@ -63,6 +87,7 @@ exports.chatWithAi = async (req, res) => {
                 gender: 'nam',
             };
         }
+
 
         // Compute AI Response
         const result = await aiHoroscopeService.generateAiHoroscopeResponse(message, history, personInput);

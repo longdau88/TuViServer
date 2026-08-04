@@ -11,8 +11,9 @@ const adminRoutes = require('./adminRoutes');
 const divinationRoutes = require('./divinationRoutes');
 
 router.use('/oauth', authRoutes);
-router.use('/api/user', authenticateToken, userRoutes);
+router.use('/api/user', userRoutes);
 router.use('/api/calendar', calendarRoutes);
+
 router.use('/api/ai', aiRoutes);
 router.use('/api/admin', adminRoutes);
 router.use('/api/divination', divinationRoutes);

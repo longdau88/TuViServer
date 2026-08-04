@@ -1,6 +1,9 @@
 const solarlunar = require('solarlunar').default || require('solarlunar');
 const { toVietnameseCanChi } = require('../services/astroService');
 const { getNapAmByCanChi } = require('../services/displayService');
+const { findUserByDeviceId, findUserById } = require('../models/userModel');
+const { isVipUser } = require('../middleware/vipMiddleware');
+
 
 // Helper to format a single day
 const formatDay = (year, month, day) => {
@@ -162,7 +165,7 @@ exports.getCalendarGrid = (req, res) => {
 
 const auspiciousService = require('../services/auspiciousService');
 const cacheService = require('../services/cacheService');
-const { findUserByDeviceId, findUserById } = require('../models/userModel');
+
 
 exports.getPersonalizedAuspiciousDays = async (req, res) => {
     try {
@@ -235,7 +238,26 @@ exports.getPersonalizedAuspiciousDays = async (req, res) => {
         }
 
         // Compute Personalized Auspicious Days
-        const result = auspiciousService.findPersonalizedAuspiciousDays(year, month, purpose, personInput);
+        let result = auspiciousService.findPersonalizedAuspiciousDays(year, month, purpose, personInput);
+
+        // Check VIP status to tier features
+        const userId = req.user ? req.user.id : (body.user_id || query.user_id);
+        const deviceId = body.device_id || query.device_id || req.headers['x-device-id'];
+        let dbUser = null;
+        if (userId) dbUser = await findUserById(userId);
+        else if (deviceId) dbUser = await findUserByDeviceId(deviceId);
+
+        const isVip = isVipUser(dbUser);
+        if (!isVip && result && result.recommended_top_days) {
+            result = {
+                ...result,
+                is_vip_limited: true,
+                recommended_top_days: result.recommended_top_days.slice(0, 3),
+                vip_upsell_message: 'Tài khoản Miễn Phí chỉ xem được 3 ngày tốt nhất. Nâng cấp VIP để xem trọn bộ lịch ngày tốt trong tháng!'
+            };
+        } else if (result) {
+            result.is_vip_limited = false;
+        }
 
         // Store in cache (TTL: 1 hour)
         await cacheService.set(cacheKey, result, 3600);
@@ -248,6 +270,7 @@ exports.getPersonalizedAuspiciousDays = async (req, res) => {
             data: result,
         });
     } catch (error) {
+
         console.error('getPersonalizedAuspiciousDays error:', error);
         return res.status(500).json({
             status: 500,

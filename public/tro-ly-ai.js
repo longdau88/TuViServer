@@ -192,9 +192,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (aiData.suggested_questions && aiData.suggested_questions.length > 0) {
                     renderSuggestedQuestions(aiData.suggested_questions);
                 }
+            } else if (json.code === 'VIP_REQUIRED' || json.status === 403) {
+                appendVipUpsellMessage(json.message || 'Bạn đã dùng hết 3 lượt hỏi AI Free hôm nay. Hãy nâng cấp VIP để trò chuyện không giới hạn!');
             } else {
                 appendAiMessage(json.message || 'Xin lỗi, có lỗi xảy ra khi xử lý câu hỏi của bạn.');
             }
+
         } catch (err) {
             console.error('Chat error:', err);
             typingIndicator.classList.add('d-none');
@@ -228,6 +231,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         chatContainer.appendChild(wrapper);
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
+
+    function appendVipUpsellMessage(messageText) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'd-flex align-items-start';
+        wrapper.innerHTML = `
+            <div class="ai-avatar-icon text-warning"><i class="bi bi-crown"></i></div>
+            <div class="message-bubble ai-message border border-warning" style="background: rgba(253, 216, 53, 0.15);">
+                <div class="fw-bold text-warning mb-1"><i class="bi bi-lock-fill me-1"></i> GIỚI HẠN TÀI KHOẢN MIỄN PHÍ</div>
+                <p class="mb-2 text-white">${messageText}</p>
+                <a href="goi-cuoc.html" class="btn btn-warning btn-sm text-dark fw-bold rounded-pill px-3 shadow">
+
+                    <i class="bi bi-stars me-1"></i> NÂNG CẤP VIP NGAY
+                </a>
+            </div>
+        `;
+        chatContainer.appendChild(wrapper);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
 
     function renderSuggestedQuestions(questions) {
         suggestedPills.innerHTML = '';

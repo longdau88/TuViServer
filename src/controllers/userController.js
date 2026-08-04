@@ -306,3 +306,68 @@ exports.clearAllCache = async (req, res) => {
         });
     }
 };
+
+const pool = require('../config/db');
+
+exports.getPublicPackagesController = async (req, res) => {
+    try {
+        let rows = [];
+        try {
+            const [dbRows] = await pool.query(`SELECT * FROM vip_packages ORDER BY price ASC`);
+            rows = dbRows;
+        } catch (dbErr) {}
+
+        if (!rows || rows.length === 0) {
+            rows = [
+                {
+                    id: 1,
+                    code: 'vip_1m',
+                    name: 'Gói VIP 1 Tháng',
+                    price: 99000,
+                    duration_days: 30,
+                    is_popular: false,
+                    features: ['Trò chuyện Trợ lý AI không giới hạn', 'Xem trọn bộ 12 Cung Lá số Tử Vi', 'Xem Lịch ngày tốt xấu chi tiết', 'Bốc quẻ & Lưu lịch sử trọn đời']
+                },
+                {
+                    id: 2,
+                    code: 'vip_6m',
+                    name: 'Gói VIP 6 Tháng (Tiết Kiệm 25%)',
+                    price: 449000,
+                    duration_days: 180,
+                    is_popular: true,
+                    features: ['Tất cả đặc quyền Gói VIP 1 Tháng', 'Ưu tiên phản hồi AI tốc độ cao', 'Phân tích lá số tử vi chuyên sâu', 'Tặng 1 lượt xem phong thủy gia đạo']
+                },
+                {
+                    id: 3,
+                    code: 'vip_1y',
+                    name: 'Gói VIP 1 Năm (Tiết Kiệm 40%)',
+                    price: 699000,
+                    duration_days: 365,
+                    is_popular: false,
+                    features: ['Tất cả đặc quyền Gói VIP 6 Tháng', 'Hỏi đáp AI không giới hạn cả năm', 'Tự động nhắc lịch Hoàng Đạo/Vận Hạn', 'Xuất File Lá số Tử Vi HD & PDF']
+                },
+                {
+                    id: 4,
+                    code: 'vip_lifetime',
+                    name: 'Gói VIP Trọn Đời (Đặc Quyền Vô Hạn)',
+                    price: 1499000,
+                    duration_days: 36500,
+                    is_popular: false,
+                    features: ['Sử dụng Trọn Đời tất cả tính năng', 'Không giới hạn lượt hỏi AI vĩnh viễn', 'Mở khóa 100% tính năng mới tương lai', 'Huy hiệu VIP Kim Cương chính chủ']
+                }
+            ];
+        }
+
+        res.set('Cache-Control', 'public, max-age=300');
+        return res.json({
+            status: 200,
+            error: 0,
+            message: 'OK',
+            data: rows
+        });
+    } catch (err) {
+        console.error('getPublicPackagesController error:', err);
+        return res.status(500).json({ status: 500, error: 1, message: 'Lỗi lấy danh sách gói cước' });
+    }
+};
+

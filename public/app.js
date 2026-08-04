@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentUser = null;
     let selectedAvatarBase64 = null;
 
-    // --- Helper: Update Top Right Nav Avatar ---
+    // --- Helper: Update Top Right Nav Avatar & VIP Package Status ---
     const updateNavAvatarUI = () => {
         if (!currentUser) {
             navUserProfile?.classList.add('d-none');
@@ -64,7 +64,35 @@ document.addEventListener('DOMContentLoaded', function () {
             navAvatarImg.classList.add('d-none');
             navAvatarPlaceholder.classList.remove('d-none');
         }
+
+        // Update User VIP Package Status Bar
+        const pkgNameEl = document.getElementById('user-pkg-name');
+        const pkgBadgeEl = document.getElementById('user-pkg-badge');
+
+        if (pkgNameEl && pkgBadgeEl) {
+            const isVip = currentUser.vip_status && currentUser.vip_status !== 'free';
+            const isExpired = isVip && currentUser.vip_expires_at && new Date(currentUser.vip_expires_at) < new Date();
+
+            if (isVip && !isExpired) {
+                const expiresDateStr = currentUser.vip_expires_at ? new Date(currentUser.vip_expires_at).toLocaleDateString('vi-VN') : 'Vĩnh viễn';
+                pkgNameEl.innerText = `VIP (Hạn dùng: ${expiresDateStr})`;
+                pkgNameEl.className = 'text-warning font-bold';
+                pkgBadgeEl.innerText = 'VIP ACTIVE';
+                pkgBadgeEl.className = 'badge bg-warning text-dark ms-1';
+            } else if (isExpired) {
+                pkgNameEl.innerText = 'Gói VIP Đã Hết Hạn';
+                pkgNameEl.className = 'text-danger font-bold';
+                pkgBadgeEl.innerText = 'Hết Hạn';
+                pkgBadgeEl.className = 'badge bg-danger text-white ms-1';
+            } else {
+                pkgNameEl.innerText = 'Miễn Phí (Free)';
+                pkgNameEl.className = 'text-light';
+                pkgBadgeEl.innerText = 'Free';
+                pkgBadgeEl.className = 'badge bg-secondary text-white ms-1';
+            }
+        }
     };
+
 
     // --- Screen Management ---
     const showScreen = (screenName) => {

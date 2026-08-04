@@ -22,16 +22,21 @@
                 <i class="bi bi-stars"></i>
                 Tử Vi Vận Mệnh
             </a>
-            <!-- Top Right User Avatar & Edit Icon -->
-            <div id="nav-user-profile" class="nav-user-profile d-none" title="Cập nhật thông tin cá nhân">
-                <div class="nav-avatar-wrapper" id="nav-avatar-btn">
-                    <div class="nav-avatar-circle">
-                        <i class="bi bi-person-fill nav-avatar-placeholder" id="nav-avatar-placeholder"></i>
-                        <img id="nav-avatar-img" src="" alt="Avatar" class="d-none" />
+            <!-- Top Right User Avatar & VIP Upgrade Button -->
+            <div class="d-flex align-items-center">
+                <a href="/goi-cuoc.html" class="btn btn-sm btn-outline-warning rounded-pill me-3 px-3 fw-semibold shadow-sm">
+                    <i class="bi bi-crown me-1"></i> Mua VIP
+                </a>
+                <div id="nav-user-profile" class="nav-user-profile d-none" title="Cập nhật thông tin cá nhân">
+                    <div class="nav-avatar-wrapper" id="nav-avatar-btn">
+                        <div class="nav-avatar-circle">
+                            <i class="bi bi-person-fill nav-avatar-placeholder" id="nav-avatar-placeholder"></i>
+                            <img id="nav-avatar-img" src="" alt="Avatar" class="d-none" />
+                        </div>
+                        <span class="nav-avatar-edit-badge" title="Chỉnh sửa thông tin">
+                            <i class="bi bi-pencil-fill"></i>
+                        </span>
                     </div>
-                    <span class="nav-avatar-edit-badge" title="Chỉnh sửa thông tin">
-                        <i class="bi bi-pencil-fill"></i>
-                    </span>
                 </div>
             </div>
         </div>
@@ -53,16 +58,27 @@
             </div>
         </section>
 
-
-
         <!-- Dashboard Screen -->
         <section id="dashboard-screen" class="d-none">
             <div class="text-center welcome-header">
                 <h1 id="dashboard-welcome-title" class="display-5">Chào mừng trở lại!</h1>
-                <p class="lead">
+                <p class="lead mb-3">
                     Chọn một chức năng để tiếp tục.
                 </p>
+                <!-- User VIP Status & Upgrade Bar -->
+                <div class="d-flex justify-content-center align-items-center gap-3 mt-2 flex-wrap" id="user-vip-status-bar">
+                    <div class="px-3 py-2 rounded-pill border shadow-sm d-flex align-items-center gap-2" style="background: rgba(28, 22, 66, 0.75); border-color: rgba(253, 216, 53, 0.4) !important;">
+                        <i class="bi bi-crown-fill text-warning fs-5"></i>
+                        <span class="small text-muted text-uppercase me-1">Gói Cước Hiện Tại:</span>
+                        <strong class="text-warning" id="user-pkg-name">Miễn Phí (Free)</strong>
+                        <span class="badge bg-secondary text-white ms-1" id="user-pkg-badge">Free</span>
+                    </div>
+                    <a href="/goi-cuoc.html" class="btn btn-warning rounded-pill shadow-sm fw-bold px-4 py-2 text-decoration-none text-dark">
+                        <i class="bi bi-stars me-1"></i> Mua Gói VIP
+                    </a>
+                </div>
             </div>
+
              <div class="row justify-content-center g-4 mt-4">
                 <div class="col-md-6 col-lg-4">
                     <a href="/tro-ly-ai.html" class="card dashboard-card h-100 text-decoration-none d-block" id="navi-ai-chat">
