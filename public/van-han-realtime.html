@@ -157,7 +157,8 @@
                         <h5 class="text-warning mb-1" id="self-display-name">
                             <i class="bi bi-person-fill me-1"></i> Hồ sơ của bạn
                         </h5>
-                        <p class="text-white mb-0 small" id="self-display-details">Đang tải thông tin hồ sơ của bạn...</p>
+                        <p class="text-white mb-0 small" id="self-display-details">Đang tải thông tin hồ sơ của bạn...
+                        </p>
                     </div>
                 </div>
 
@@ -180,7 +181,8 @@
                         <div class="col-md-3">
                             <label class="form-label fw-bold d-block">Giới tính</label>
                             <div class="btn-group w-100" role="group">
-                                <input type="radio" class="btn-check" name="user-gender" id="gender-male" value="nam" checked>
+                                <input type="radio" class="btn-check" name="user-gender" id="gender-male" value="nam"
+                                    checked>
                                 <label class="btn btn-outline-info" for="gender-male">Nam</label>
                                 <input type="radio" class="btn-check" name="user-gender" id="gender-female" value="nu">
                                 <label class="btn btn-outline-info" for="gender-female">Nữ</label>
@@ -191,15 +193,18 @@
                     <!-- Time Filter & Date Picker -->
                     <div class="row g-3 align-items-center border-top border-secondary pt-3">
                         <div class="col-md-7">
-                            <label class="form-label fw-bold d-block text-warning mb-2">Mốc Thời Gian Xem Vận Hạn:</label>
+                            <label class="form-label fw-bold d-block text-warning mb-2">Mốc Thời Gian Xem Vận
+                                Hạn:</label>
                             <div class="btn-group time-btn-group w-100" role="group">
-                                <button type="button" class="btn btn-outline-warning active" id="btn-today">Hôm Nay</button>
+                                <button type="button" class="btn btn-outline-warning active" id="btn-today">Hôm
+                                    Nay</button>
                                 <button type="button" class="btn btn-outline-warning" id="btn-month">Tháng Này</button>
                                 <button type="button" class="btn btn-outline-warning" id="btn-year">Năm Nay</button>
                             </div>
                         </div>
                         <div class="col-md-5">
-                            <label for="target-date-picker" class="form-label fw-bold text-warning mb-2">Hoặc Chọn Ngày Xem Cụ Thể:</label>
+                            <label for="target-date-picker" class="form-label fw-bold text-warning mb-2">Hoặc Chọn Ngày
+                                Xem Cụ Thể:</label>
                             <input type="date" class="form-control" id="target-date-picker">
                         </div>
                     </div>
@@ -314,13 +319,15 @@
             <div class="row g-4 mb-4">
                 <div class="col-md-6">
                     <div class="card realtime-card shadow p-4 h-100">
-                        <h4 class="text-info mb-2" id="monthly-title"><i class="bi bi-calendar-month me-2"></i> Tử Vi Tháng Này</h4>
+                        <h4 class="text-info mb-2" id="monthly-title"><i class="bi bi-calendar-month me-2"></i> Tử Vi
+                            Tháng Này</h4>
                         <p class="text-white small mb-0" id="monthly-text">--</p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="card realtime-card shadow p-4 h-100">
-                        <h4 class="text-warning mb-2" id="annual-title"><i class="bi bi-calendar-star me-2"></i> Tử Vi Năm Nay</h4>
+                        <h4 class="text-warning mb-2" id="annual-title"><i class="bi bi-calendar-star me-2"></i> Tử Vi
+                            Năm Nay</h4>
                         <p class="text-white small mb-0" id="annual-text">--</p>
                     </div>
                 </div>
@@ -328,7 +335,8 @@
 
             <!-- Auspicious Hours & Tips -->
             <div class="card realtime-card shadow p-4 mb-4">
-                <h4 class="text-warning mb-3"><i class="bi bi-clock-history me-2"></i> Giờ Hoàng Đạo Cát Tường & Lời Khuyên Hành Sự</h4>
+                <h4 class="text-warning mb-3"><i class="bi bi-clock-history me-2"></i> Giờ Hoàng Đạo Cát Tường & Lời
+                    Khuyên Hành Sự</h4>
                 <div id="hoang-dao-container" class="mb-3">
                     <!-- Auspicious hours badges -->
                 </div>
@@ -347,7 +355,9 @@
 
     <footer class="footer mt-auto py-3 text-center">
         <div class="container">
-            <span class="text-muted">&copy; 2024 Tử Vi Vận Mệnh. All Rights Reserved.</span>
+            <span class="text-muted">&copy;
+                <script>document.write(new Date().getFullYear())</script> Tử Vi Vận Mệnh. All Rights Reserved.
+            </span>
         </div>
     </footer>
 

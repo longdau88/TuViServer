@@ -132,7 +132,7 @@ exports.createUser = async (req, res) => {
 };
 
 exports.updateUser = async (req, res) => {
-    const { user_id, full_name, email, birthday, birth_time, gender, device_info, avatar_base64, avatar_url, firebase_token } = req.body;
+    const { user_id, full_name, email, birthday, birth_time, gender, device_info, avatar_base64, avatar_url, firebase_token, password } = req.body;
 
     if (!user_id || !full_name || !email || !birthday || !birth_time || !gender) {
         return res.status(400).json({
@@ -151,6 +151,7 @@ exports.updateUser = async (req, res) => {
             birthday,
             birth_time,
             gender,
+            password,
             device_info,
             avatar_base64,
             avatar_url,
@@ -231,6 +232,67 @@ exports.updateUser = async (req, res) => {
             status: 500,
             error: 1,
             message: 'Internal Server Error',
+            data: {},
+        });
+    }
+};
+
+exports.logoutUserDevice = async (req, res) => {
+    const userId = Number(req.body?.user_id);
+    const deviceId = req.body?.device_id || req.headers['x-device-id'] || req.query.device_id;
+
+    if (!userId || Number.isNaN(userId) || userId <= 0) {
+        return res.status(400).json({
+            status: 400,
+            error: 1,
+            message: 'Missing or invalid user_id',
+            data: {},
+        });
+    }
+
+    if (!deviceId) {
+        return res.status(400).json({
+            status: 400,
+            error: 1,
+            message: 'Missing device_id',
+            data: {},
+        });
+    }
+
+    try {
+        const [result] = await pool.query(
+            `UPDATE users SET device_id = NULL WHERE id = ? AND device_id = ?`,
+            [userId, deviceId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                status: 404,
+                error: 1,
+                message: 'Không tìm thấy tài khoản đang liên kết với thiết bị này',
+                data: {},
+            });
+        }
+
+        const cacheKeys = [
+            userCache.keys.userById(userId),
+            userCache.keys.userByDevice(deviceId),
+            userCache.keys.profileDisplay(userId),
+        ];
+        await Promise.all(cacheKeys.map((key) => cacheService.del(key).catch(() => null)));
+
+        return res.json({
+            status: 200,
+            error: 0,
+            message: 'Đăng xuất thành công',
+            data: {},
+        });
+    } catch (error) {
+        console.error('logoutUserDevice error:', error);
+        return res.status(500).json({
+            status: 500,
+            error: 1,
+            message: 'Lỗi máy chủ khi đăng xuất',
             data: {},
         });
     }
@@ -319,7 +381,7 @@ exports.getPublicPackagesController = async (req, res) => {
         try {
             const [dbRows] = await pool.query(`SELECT * FROM vip_packages ORDER BY price ASC`);
             rows = dbRows;
-        } catch (dbErr) {}
+        } catch (dbErr) { }
 
         if (!rows || rows.length === 0) {
             rows = [

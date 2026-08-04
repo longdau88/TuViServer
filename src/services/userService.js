@@ -151,7 +151,7 @@ const createUser = async (userData) => {
 
 const updateUser = async (userData) => {
     const {
-        user_id, full_name, email, birthday, birth_time, gender, device_info,
+        user_id, full_name, email, birthday, birth_time, gender, password, device_info,
         avatar_base64, avatar_url, firebase_token,
     } = userData;
     const userId = Number(user_id);
@@ -194,21 +194,30 @@ const updateUser = async (userData) => {
         userId,
     });
 
-    const sql = `
-        UPDATE users
-        SET full_name = ?,
-            email = ?,
-            birthday = ?,
-            birth_time = ?,
-            gender = ?,
-            device_info = ?,
-            avatar_url = COALESCE(?, avatar_url),
-            firebase_token = ?
-        WHERE id = ?
-    `;
+    const trimmedPassword = typeof password === 'string' ? password.trim() : '';
+    const fields = [
+        'full_name = ?',
+        'email = ?',
+    ];
     const values = [
         full_name,
         normalizedEmail,
+    ];
+
+    if (trimmedPassword) {
+        fields.push('password_hash = ?');
+        values.push(hashPassword(trimmedPassword));
+    }
+
+    fields.push(
+        'birthday = ?',
+        'birth_time = ?',
+        'gender = ?',
+        'device_info = ?',
+        'avatar_url = COALESCE(?, avatar_url)',
+        'firebase_token = ?'
+    );
+    values.push(
         normalizedBirthday,
         normalizedBirthdayTime,
         gender,
@@ -216,7 +225,9 @@ const updateUser = async (userData) => {
         resolvedAvatarUrl === undefined ? null : resolvedAvatarUrl,
         firebase_token,
         userId,
-    ];
+    );
+
+    const sql = `UPDATE users SET ${fields.join(', ')} WHERE id = ?`;
 
     try {
         await pool.query(sql, values);
@@ -249,6 +260,6 @@ const updateUser = async (userData) => {
 };
 
 module.exports = {
-  createUser,
-  updateUser,
+    createUser,
+    updateUser,
 };

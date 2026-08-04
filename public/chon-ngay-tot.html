@@ -104,9 +104,22 @@
             align-self: flex-start;
         }
 
-        .tag-good { background: #28a745; color: #fff; box-shadow: 0 0 6px rgba(40, 167, 69, 0.5); }
-        .tag-neutral { background: #ffc107; color: #000; font-weight: 700; }
-        .tag-bad { background: #dc3545; color: #fff; }
+        .tag-good {
+            background: #28a745;
+            color: #fff;
+            box-shadow: 0 0 6px rgba(40, 167, 69, 0.5);
+        }
+
+        .tag-neutral {
+            background: #ffc107;
+            color: #000;
+            font-weight: 700;
+        }
+
+        .tag-bad {
+            background: #dc3545;
+            color: #fff;
+        }
 
         .self-info-badge {
             background: rgba(94, 53, 177, 0.3);
@@ -132,7 +145,8 @@
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap welcome-header">
             <div>
                 <h1 class="mb-1 display-5">Chọn Ngày Giờ Tốt Cá Nhân Hóa</h1>
-                <p class="lead mb-0 text-muted">Tra cứu ngày lành tháng tốt chuẩn xác theo Mệnh Nạp Âm & Tuổi của bạn</p>
+                <p class="lead mb-0 text-muted">Tra cứu ngày lành tháng tốt chuẩn xác theo Mệnh Nạp Âm & Tuổi của bạn
+                </p>
             </div>
             <a href="/" class="btn btn-outline-secondary mt-2 mt-md-0">
                 <i class="bi bi-arrow-left"></i> Về Bảng điều khiển
@@ -144,7 +158,8 @@
             <div class="card auspicious-card shadow p-3 p-md-4 mb-4">
                 <!-- Target Person Selector (Bản thân / Người khác) -->
                 <div class="text-center mb-4">
-                    <label class="form-label d-block text-warning fw-bold mb-2 fs-5">Chọn Đối Tượng Xem Ngày Tốt:</label>
+                    <label class="form-label d-block text-warning fw-bold mb-2 fs-5">Chọn Đối Tượng Xem Ngày
+                        Tốt:</label>
                     <div class="btn-group mode-toggle-group" role="group" id="target-mode-group">
                         <input type="radio" class="btn-check" name="target-mode" id="mode-self" value="self" checked>
                         <label class="btn btn-outline-warning" for="mode-self">
@@ -187,7 +202,8 @@
                         <div class="col-md-3">
                             <label class="form-label fw-bold d-block">Giới tính</label>
                             <div class="btn-group w-100" role="group">
-                                <input type="radio" class="btn-check" name="user-gender" id="gender-male" value="nam" checked>
+                                <input type="radio" class="btn-check" name="user-gender" id="gender-male" value="nam"
+                                    checked>
                                 <label class="btn btn-outline-info" for="gender-male">Nam</label>
                                 <input type="radio" class="btn-check" name="user-gender" id="gender-female" value="nu">
                                 <label class="btn btn-outline-info" for="gender-female">Nữ</label>
@@ -196,10 +212,12 @@
                     </div>
 
                     <!-- Purpose Selector Grid -->
-                    <label class="form-label fw-bold d-block text-warning mb-2 fs-5 text-center">Chọn Mục Đích Công Việc:</label>
+                    <label class="form-label fw-bold d-block text-warning mb-2 fs-5 text-center">Chọn Mục Đích Công
+                        Việc:</label>
                     <div class="row g-2 mb-4 purpose-btn-group">
                         <div class="col-6 col-md-4 col-lg-2">
-                            <input type="radio" class="btn-check" name="purpose" id="purpose-khai-truong" value="khai_truong" checked>
+                            <input type="radio" class="btn-check" name="purpose" id="purpose-khai-truong"
+                                value="khai_truong" checked>
                             <label class="btn btn-outline-warning" for="purpose-khai-truong">
                                 <i class="bi bi-shop"></i>
                                 <span>Khai Trương</span>
@@ -227,14 +245,16 @@
                             </label>
                         </div>
                         <div class="col-6 col-md-4 col-lg-2">
-                            <input type="radio" class="btn-check" name="purpose" id="purpose-xuat-hanh" value="xuat_hanh">
+                            <input type="radio" class="btn-check" name="purpose" id="purpose-xuat-hanh"
+                                value="xuat_hanh">
                             <label class="btn btn-outline-warning" for="purpose-xuat-hanh">
                                 <i class="bi bi-airplane-fill"></i>
                                 <span>Xuất Hành</span>
                             </label>
                         </div>
                         <div class="col-6 col-md-4 col-lg-2">
-                            <input type="radio" class="btn-check" name="purpose" id="purpose-giao-dich" value="giao_dich">
+                            <input type="radio" class="btn-check" name="purpose" id="purpose-giao-dich"
+                                value="giao_dich">
                             <label class="btn btn-outline-warning" for="purpose-giao-dich">
                                 <i class="bi bi-file-earmark-text-fill"></i>
                                 <span>Ký Hợp Đồng</span>
@@ -287,7 +307,8 @@
 
             <!-- Top Recommended Days Section -->
             <div class="card auspicious-card shadow p-4 mb-4">
-                <h4 class="text-warning mb-3"><i class="bi bi-trophy-fill me-2"></i> Top 5 Ngày Tốt Nhất Trong Tháng</h4>
+                <h4 class="text-warning mb-3"><i class="bi bi-trophy-fill me-2"></i> Top 5 Ngày Tốt Nhất Trong Tháng
+                </h4>
                 <div class="row g-3" id="top-days-container">
                     <!-- Dynamic Top Days -->
                 </div>
@@ -296,7 +317,7 @@
             <!-- Full Calendar Grid -->
             <div class="card auspicious-card shadow p-3 p-md-4 mb-4">
                 <h4 class="text-warning mb-3"><i class="bi bi-calendar3 me-2"></i> Bảng Lịch Cát Tường Chi Tiết</h4>
-                
+
                 <div class="calendar-grid mb-2">
                     <div class="calendar-header-day">T2</div>
                     <div class="calendar-header-day">T3</div>
@@ -321,14 +342,16 @@
 
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <h5 class="text-info border-bottom border-secondary pb-2"><i class="bi bi-check-circle-fill me-2 text-success"></i> Điểm Tốt & Hợp Bản Mệnh</h5>
+                        <h5 class="text-info border-bottom border-secondary pb-2"><i
+                                class="bi bi-check-circle-fill me-2 text-success"></i> Điểm Tốt & Hợp Bản Mệnh</h5>
                         <ul class="list-group list-group-flush" id="detail-reasons-list">
                             <!-- Dynamic Reasons -->
                         </ul>
                     </div>
 
                     <div class="col-md-6">
-                        <h5 class="text-danger border-bottom border-secondary pb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i> Lưu Ý & Cảnh Báo</h5>
+                        <h5 class="text-danger border-bottom border-secondary pb-2"><i
+                                class="bi bi-exclamation-triangle-fill me-2"></i> Lưu Ý & Cảnh Báo</h5>
                         <ul class="list-group list-group-flush" id="detail-warnings-list">
                             <!-- Dynamic Warnings -->
                         </ul>
@@ -336,7 +359,8 @@
                 </div>
 
                 <div class="mt-4 border-top border-secondary pt-3">
-                    <h5 class="text-warning mb-3"><i class="bi bi-clock-history me-2"></i> Giờ Hoàng Đạo Cá Nhân Hóa (Hợp Bản Mệnh)</h5>
+                    <h5 class="text-warning mb-3"><i class="bi bi-clock-history me-2"></i> Giờ Hoàng Đạo Cá Nhân Hóa
+                        (Hợp Bản Mệnh)</h5>
                     <div id="detail-hours-container">
                         <!-- Dynamic Hours -->
                     </div>
@@ -347,7 +371,9 @@
 
     <footer class="footer mt-auto py-3 text-center">
         <div class="container">
-            <span class="text-muted">&copy; 2024 Tử Vi Vận Mệnh. All Rights Reserved.</span>
+            <span class="text-muted">&copy;
+                <script>document.write(new Date().getFullYear())</script> Tử Vi Vận Mệnh. All Rights Reserved.
+            </span>
         </div>
     </footer>
 

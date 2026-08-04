@@ -101,12 +101,25 @@
             animation: typing 1.4s infinite ease-in-out both;
         }
 
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
 
         @keyframes typing {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1);
+            }
         }
 
         .self-info-badge {
@@ -197,7 +210,8 @@
                     <div class="ai-avatar-icon"><i class="bi bi-robot"></i></div>
                     <div class="message-bubble ai-message">
                         <strong>Xin chào! Tôi là Trợ Lý AI Tử Vi.</strong>
-                        <p class="mb-0 mt-1">Tôi đã nạp dữ liệu lá số Tử Vi & vận hạn của bạn. Bạn muốn đặt câu hỏi gì về **Tài Lộc 💰, Công Danh 💼, Tình Cảm ❤️ hay Phong Thủy 🧭** hôm nay?</p>
+                        <p class="mb-0 mt-1">Tôi đã nạp dữ liệu lá số Tử Vi & vận hạn của bạn. Bạn muốn đặt câu hỏi gì
+                            về **Tài Lộc 💰, Công Danh 💼, Tình Cảm ❤️ hay Phong Thủy 🧭** hôm nay?</p>
                     </div>
                 </div>
             </div>
@@ -205,7 +219,8 @@
             <!-- Typing Indicator (Hidden by default) -->
             <div id="typing-indicator" class="px-4 py-2 text-warning small d-none">
                 <div class="d-flex align-items-center gap-2">
-                    <div class="ai-avatar-icon" style="width: 24px; height: 24px; font-size: 0.8rem;"><i class="bi bi-robot"></i></div>
+                    <div class="ai-avatar-icon" style="width: 24px; height: 24px; font-size: 0.8rem;"><i
+                            class="bi bi-robot"></i></div>
                     <div class="typing-indicator">
                         <div class="typing-dot"></div>
                         <div class="typing-dot"></div>
@@ -217,15 +232,18 @@
 
             <!-- Suggested Follow-up Questions -->
             <div id="suggested-questions-box" class="px-4 py-2 border-top border-secondary d-none">
-                <span class="text-warning small fw-bold d-block mb-1"><i class="bi bi-lightbulb me-1"></i> Câu hỏi gợi ý tiếp theo:</span>
+                <span class="text-warning small fw-bold d-block mb-1"><i class="bi bi-lightbulb me-1"></i> Câu hỏi gợi ý
+                    tiếp theo:</span>
                 <div class="d-flex gap-2 flex-wrap" id="suggested-questions-pills"></div>
             </div>
 
             <!-- Input Area -->
             <div class="card-footer bg-transparent border-top border-secondary p-3">
                 <form id="ai-chat-form" class="d-flex gap-2">
-                    <input type="text" class="form-control bg-dark text-white border-secondary rounded-pill px-4" id="chat-input" placeholder="Nhập câu hỏi Tử Vi của bạn tại đây..." required autocomplete="off">
-                    <button type="submit" class="btn btn-warning rounded-circle p-2 shadow" style="width: 46px; height: 46px;" id="btn-send">
+                    <input type="text" class="form-control bg-dark text-white border-secondary rounded-pill px-4"
+                        id="chat-input" placeholder="Nhập câu hỏi Tử Vi của bạn tại đây..." required autocomplete="off">
+                    <button type="submit" class="btn btn-warning rounded-circle p-2 shadow"
+                        style="width: 46px; height: 46px;" id="btn-send">
                         <i class="bi bi-send-fill fs-5"></i>
                     </button>
                 </form>
@@ -235,7 +253,9 @@
 
     <footer class="footer mt-auto py-3 text-center">
         <div class="container">
-            <span class="text-muted">&copy; 2024 Tử Vi Vận Mệnh. All Rights Reserved.</span>
+            <span class="text-muted">&copy;
+                <script>document.write(new Date().getFullYear())</script> Tử Vi Vận Mệnh. All Rights Reserved.
+            </span>
         </div>
     </footer>
 

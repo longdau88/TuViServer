@@ -28,6 +28,10 @@
                     class="btn btn-sm btn-outline-warning rounded-pill me-3 px-3 fw-semibold shadow-sm">
                     <i class="bi bi-crown me-1"></i> Mua VIP
                 </a>
+                <button type="button" id="nav-logout-btn"
+                    class="btn btn-sm btn-outline-danger rounded-pill me-3 px-3 fw-semibold shadow-sm d-none">
+                    <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
+                </button>
                 <div id="nav-user-profile" class="nav-user-profile d-none" title="Cập nhật thông tin cá nhân">
                     <div class="nav-avatar-wrapper" id="nav-avatar-btn">
                         <div class="nav-avatar-circle">
@@ -194,7 +198,9 @@
 
     <footer class="footer mt-auto py-3">
         <div class="container text-center">
-            <span>&copy; 2024 Tử Vi Vận Mệnh. All Rights Reserved.</span>
+            <span>&copy;
+                <script>document.write(new Date().getFullYear())</script> Tử Vi Vận Mệnh. All Rights Reserved.
+            </span>
         </div>
     </footer>
 

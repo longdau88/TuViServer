@@ -169,6 +169,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         const formData = new FormData(userForm);
         const userData = Object.fromEntries(formData.entries());
         userData.device_id = deviceId;
+        if (typeof userData.password === 'string') {
+            userData.password = userData.password.trim();
+            if (!userData.password) {
+                delete userData.password;
+            }
+        }
         if (selectedAvatarBase64) {
             userData.avatar_base64 = selectedAvatarBase64;
         }

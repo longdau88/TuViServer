@@ -12,6 +12,7 @@ router.get('/check-device_id', userController.checkDeviceId);
 router.get('/la-so-tu-vi', heavyReadLimiter, userController.getProfileDisplay);
 router.post('/create', userController.createUser);
 router.post('/update-user', userController.updateUser);
+router.post('/logout', authenticateToken, userController.logoutUserDevice);
 router.post('/compatibility', heavyReadLimiter, compatibilityController.getCompatibilityAnalysis);
 router.post('/realtime-horoscope', heavyReadLimiter, realtimeHoroscopeController.getRealtimeHoroscope);
 router.get('/realtime-horoscope', heavyReadLimiter, realtimeHoroscopeController.getRealtimeHoroscope);

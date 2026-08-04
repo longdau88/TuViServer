@@ -56,13 +56,16 @@
                                 <div class="avatar-upload-section mb-4">
                                     <div class="avatar-preview-wrapper" id="avatar-preview-wrapper">
                                         <div class="avatar-preview" id="avatar-preview">
-                                            <i class="bi bi-person-fill avatar-placeholder-icon" id="avatar-placeholder-icon"></i>
+                                            <i class="bi bi-person-fill avatar-placeholder-icon"
+                                                id="avatar-placeholder-icon"></i>
                                             <img id="avatar-preview-img" src="" alt="Avatar" class="d-none" />
                                         </div>
-                                        <button type="button" class="avatar-edit-btn" id="avatar-edit-btn" title="Chọn ảnh">
+                                        <button type="button" class="avatar-edit-btn" id="avatar-edit-btn"
+                                            title="Chọn ảnh">
                                             <i class="bi bi-camera-fill"></i>
                                         </button>
-                                        <button type="button" class="avatar-remove-btn d-none" id="avatar-remove-btn" title="Xóa ảnh">
+                                        <button type="button" class="avatar-remove-btn d-none" id="avatar-remove-btn"
+                                            title="Xóa ảnh">
                                             <i class="bi bi-x-lg"></i>
                                         </button>
                                     </div>
@@ -73,46 +76,64 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-4">
                                         <div class="form-floating">
-                                            <input type="text" class="form-control" id="full_name" name="full_name" placeholder="Họ và tên" required />
+                                            <input type="text" class="form-control" id="full_name" name="full_name"
+                                                placeholder="Họ và tên" required />
                                             <label for="full_name">Họ và tên</label>
                                         </div>
                                     </div>
                                     <div class="col-md-6 mb-4">
                                         <div class="form-floating">
-                                            <input type="email" class="form-control" id="email" name="email" placeholder="Email" required />
+                                            <input type="email" class="form-control" id="email" name="email"
+                                                placeholder="Email" required />
                                             <label for="email">Email</label>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="row">
-                                     <div class="col-md-6 mb-4">
+                                    <div class="col-md-6 mb-4">
                                         <div class="form-floating">
-                                            <input type="date" class="form-control" id="birthday" name="birthday" required />
+                                            <input type="date" class="form-control" id="birthday" name="birthday"
+                                                required />
                                             <label for="birthday">Ngày sinh (Dương lịch)</label>
                                         </div>
                                     </div>
                                     <div class="col-md-6 mb-4">
-                                         <div class="form-floating">
-                                            <input type="time" class="form-control" id="birth_time" name="birth_time" required />
+                                        <div class="form-floating">
+                                            <input type="time" class="form-control" id="birth_time" name="birth_time"
+                                                required />
                                             <label for="birth_time">Giờ sinh</label>
                                         </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12 mb-4">
+                                        <div class="form-floating">
+                                            <input type="password" class="form-control" id="password" name="password"
+                                                placeholder="Mật khẩu mới" autocomplete="new-password" />
+                                            <label for="password">Mật khẩu mới</label>
+                                        </div>
+                                        <div class="form-text text-muted mt-2">Để trống nếu bạn không muốn thay đổi mật
+                                            khẩu.</div>
                                     </div>
                                 </div>
                                 <div class="mb-4">
                                     <h6 class="form-label">Giới tính</h6>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="gender" id="male" value="Nam" checked />
+                                        <input class="form-check-input" type="radio" name="gender" id="male" value="Nam"
+                                            checked />
                                         <label class="form-check-label" for="male">Nam</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="gender" id="female" value="Nữ" />
+                                        <input class="form-check-input" type="radio" name="gender" id="female"
+                                            value="Nữ" />
                                         <label class="form-check-label" for="female">Nữ</label>
                                     </div>
                                 </div>
                                 <div class="d-grid gap-2">
                                     <button id="submit-button" type="submit" class="btn btn-primary btn-lg">
                                         <span id="submit-button-text">Cập Nhật Thông Tin</span>
-                                        <div id="submit-spinner" class="spinner-border spinner-border-sm d-none" role="status">
+                                        <div id="submit-spinner" class="spinner-border spinner-border-sm d-none"
+                                            role="status">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
                                     </button>
@@ -128,7 +149,9 @@
 
     <footer class="footer mt-auto py-3">
         <div class="container text-center">
-            <span>&copy; <script>document.write(new Date().getFullYear())</script> Tử Vi Vận Mệnh. All Rights Reserved.</span>
+            <span>&copy;
+                <script>document.write(new Date().getFullYear())</script> Tử Vi Vận Mệnh. All Rights Reserved.
+            </span>
         </div>
     </footer>
 

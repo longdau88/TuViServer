@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const navAvatarBtn = document.getElementById('nav-avatar-btn');
     const navAvatarImg = document.getElementById('nav-avatar-img');
     const navAvatarPlaceholder = document.getElementById('nav-avatar-placeholder');
+    const navLogoutBtn = document.getElementById('nav-logout-btn');
 
     // Dashboard elements
     const dashboardWelcomeTitle = document.getElementById('dashboard-welcome-title');
@@ -69,9 +70,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const updateNavAvatarUI = () => {
         if (!currentUser) {
             navUserProfile?.classList.add('d-none');
+            navLogoutBtn?.classList.add('d-none');
             return;
         }
         navUserProfile?.classList.remove('d-none');
+        navLogoutBtn?.classList.remove('d-none');
         if (currentUser.avatar_url) {
             navAvatarImg.src = currentUser.avatar_url;
             navAvatarImg.classList.remove('d-none');
@@ -178,6 +181,38 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const goToUpdateUserScreen = () => {
         window.location.href = '/update-user.html';
+    };
+
+    const handleLogout = async () => {
+        if (!currentUser) {
+            goToCreateUserScreen();
+            return;
+        }
+
+        const confirmed = confirm('Bạn có chắc muốn đăng xuất khỏi thiết bị này?');
+        if (!confirmed) return;
+
+        try {
+            await apiFetch('/api/user/logout', {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_id: currentUser.user_id || currentUser.id,
+                    device_id: deviceId,
+                }),
+            });
+        } catch (error) {
+            console.warn('Logout sync warning:', error.message);
+        } finally {
+            currentUser = null;
+            webToken = null;
+            selectedAvatarBase64 = null;
+            localStorage.removeItem('webToken');
+            localStorage.removeItem('token');
+            localStorage.removeItem('tuvi_user_profile');
+            localStorage.removeItem('deviceId');
+            deviceId = null;
+            window.location.href = '/create-user.html';
+        }
     };
 
     const goToViewChart = async () => {
@@ -545,6 +580,7 @@ document.addEventListener('DOMContentLoaded', function () {
         userForm?.addEventListener('submit', handleFormSubmit);
         naviUpdateInfo?.addEventListener('click', goToUpdateUserScreen);
         navAvatarBtn?.addEventListener('click', goToUpdateUserScreen);
+        navLogoutBtn?.addEventListener('click', handleLogout);
         resultsBackButton?.addEventListener('click', goToDashboard);
         dashboardBackButton?.addEventListener('click', goToDashboard);
         document.getElementById('navbar-brand')?.addEventListener('click', (e) => {
