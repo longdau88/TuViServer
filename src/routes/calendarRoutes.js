@@ -9,5 +9,8 @@ router.get('/grid', calendarController.getCalendarGrid);
 router.get('/convert', calendarController.convertDate);
 router.post('/auspicious-days', calendarController.getPersonalizedAuspiciousDays);
 router.get('/auspicious-days', calendarController.getPersonalizedAuspiciousDays);
+router.get('/daily-personalized', calendarController.getDailyPersonalizedWidgetController);
+router.post('/daily-personalized', calendarController.getDailyPersonalizedWidgetController);
 
 module.exports = router;
+

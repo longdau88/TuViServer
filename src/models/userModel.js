@@ -323,7 +323,27 @@ const createUsersTable = async () => {
 
     // Clean up sample demo transactions if any
     await pool.query("DELETE FROM transactions WHERE transaction_ref IN ('FT260804001928', 'MM260804008812')");
+
+    // Create Divination History table
+    const sqlDivination = `
+    CREATE TABLE IF NOT EXISTS divination_history (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      user_id INT UNSIGNED NULL,
+      device_id VARCHAR(255) NULL,
+      hexagram_id INT NOT NULL,
+      hexagram_name VARCHAR(255) NOT NULL,
+      summary TEXT NULL,
+      advice TEXT NULL,
+      draw_date DATE NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY idx_user_date (user_id, draw_date),
+      KEY idx_device_date (device_id, draw_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `;
+    await pool.query(sqlDivination);
 };
+
 
 
 
@@ -699,6 +719,53 @@ const deleteTransaction = async (transId) => {
     await pool.query(`DELETE FROM transactions WHERE id = ?`, [transId]);
 };
 
+const saveDivinationDraw = async ({ user_id = null, device_id = null, hexagram_id, hexagram_name, summary, advice, draw_date }) => {
+    const sql = `
+        INSERT INTO divination_history (user_id, device_id, hexagram_id, hexagram_name, summary, advice, draw_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    const [result] = await pool.query(sql, [user_id, device_id, hexagram_id, hexagram_name, summary, advice, draw_date]);
+    return result.insertId;
+};
+
+const getTodayDivinationDraw = async ({ user_id = null, device_id = null, draw_date }) => {
+    let sql = `SELECT * FROM divination_history WHERE draw_date = ?`;
+    const params = [draw_date];
+
+    if (user_id) {
+        sql += ` AND user_id = ?`;
+        params.push(user_id);
+    } else if (device_id) {
+        sql += ` AND device_id = ?`;
+        params.push(device_id);
+    } else {
+        return null;
+    }
+
+    sql += ` ORDER BY id DESC LIMIT 1`;
+    const [rows] = await pool.query(sql, params);
+    return rows.length > 0 ? rows[0] : null;
+};
+
+const getDivinationHistory = async ({ user_id = null, device_id = null, limit = 20, offset = 0 } = {}) => {
+    let sql = `SELECT * FROM divination_history WHERE 1=1`;
+    const params = [];
+
+    if (user_id) {
+        sql += ` AND user_id = ?`;
+        params.push(user_id);
+    } else if (device_id) {
+        sql += ` AND device_id = ?`;
+        params.push(device_id);
+    }
+
+    sql += ` ORDER BY id DESC LIMIT ? OFFSET ?`;
+    params.push(Number(limit), Number(offset));
+
+    const [rows] = await pool.query(sql, params);
+    return rows;
+};
+
 module.exports = {
   createUsersTable,
   findUserByDeviceIdFromDb,
@@ -723,7 +790,11 @@ module.exports = {
   getAdminStats,
   getAllTransactions,
   updateTransactionStatus,
-  deleteTransaction
+  deleteTransaction,
+  saveDivinationDraw,
+  getTodayDivinationDraw,
+  getDivinationHistory
 };
+
 
 

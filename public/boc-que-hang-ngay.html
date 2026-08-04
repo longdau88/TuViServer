@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bốc Quẻ & Năng Lượng Hằng Ngày - Tử Vi Vận Mệnh</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        .custom-card {
+            background-color: rgba(28, 22, 66, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.25rem;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .score-badge {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid var(--secondary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin: 0 auto 0.75rem auto;
+            box-shadow: 0 0 20px rgba(253, 216, 53, 0.3);
+        }
+
+        .tag-badge {
+            background: rgba(94, 53, 177, 0.3);
+            border: 1px solid rgba(253, 216, 53, 0.3);
+            color: #fff;
+            padding: 0.3rem 0.8rem;
+            border-radius: 1rem;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin: 0.2rem;
+        }
+
+        .tag-badge-green {
+            background: rgba(40, 167, 69, 0.25);
+            border: 1px solid #28a745;
+            color: #28a745;
+        }
+
+        .stage-box {
+            text-align: center;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .jar-icon-wrapper {
+            font-size: 5.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+
+        .jar-icon-wrapper:hover {
+            transform: scale(1.08);
+        }
+
+        .shake-anim {
+            animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) infinite;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0) rotate(-4deg); }
+            20%, 80% { transform: translate3d(4px, 0, 0) rotate(6deg); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0) rotate(-8deg); }
+            40%, 60% { transform: translate3d(6px, 0, 0) rotate(8deg); }
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #fdd835, #f57f17);
+            color: #000;
+            font-weight: 700;
+            border: none;
+            padding: 0.9rem 2.2rem;
+            border-radius: 2rem;
+            box-shadow: 0 4px 15px rgba(253, 216, 53, 0.35);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(253, 216, 53, 0.5);
+            color: #000;
+        }
+
+        .result-box {
+            display: none;
+            background: rgba(15, 12, 41, 0.9);
+            border: 2px solid var(--secondary-color);
+            border-radius: 1.25rem;
+            padding: 2rem;
+            margin-top: 2rem;
+            text-align: left;
+        }
+
+        .thoan-tu-quote {
+            background: rgba(253, 216, 53, 0.15);
+            border-left: 4px solid var(--secondary-color);
+            padding: 1.1rem 1.3rem;
+            border-radius: 0.5rem;
+            font-style: italic;
+            color: #ffeb3b !important;
+            font-size: 1.05rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* High Contrast Bright Text Rules */
+        body {
+            color: #f8fafc !important;
+        }
+
+        .text-muted, .small.text-muted, p.text-muted {
+            color: #cbd5e1 !important;
+        }
+
+        .lead.text-muted {
+            color: #e2e8f0 !important;
+        }
+
+        .widget-label {
+            color: #fcd34d !important;
+            font-weight: 600;
+        }
+
+        .widget-value {
+            color: #ffffff !important;
+        }
+
+        .aspect-item p {
+            color: #f8fafc !important;
+            font-size: 0.95rem;
+        }
+
+        #hexSummary {
+            color: #ffffff !important;
+        }
+
+        table.table-dark td {
+            color: #f1f5f9 !important;
+        }
+
+    </style>
+</head>
+
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-stars"></i>
+                Tử Vi Vận Mệnh
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="container my-4">
+        <!-- Sub-header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap welcome-header">
+            <div>
+                <h1 class="mb-1 display-5">Bốc Quẻ & Năng Lượng Hằng Ngày</h1>
+                <p class="lead mb-0 text-muted">Gieo quẻ Kinh Dịch hằng ngày & Xem chỉ số Năng lượng Cát Tường cá nhân hóa</p>
+            </div>
+            <a href="/" class="btn btn-outline-secondary mt-2 mt-md-0">
+                <i class="bi bi-arrow-left"></i> Về Bảng điều khiển
+            </a>
+        </div>
+
+        <!-- 1. PERSONALIZED DAILY ENERGY WIDGET -->
+        <div class="custom-card shadow">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <h4 class="mb-0 text-warning"><i class="bi bi-lightning-charge-fill"></i> Năng Lượng & Giờ Hoàng Đạo Cá Nhân Hóa Hôm Nay</h4>
+                <span class="badge bg-purple px-3 py-2 border border-warning text-warning" id="userAstroTag">Mệnh: Kim - Tuổi: Canh Thìn</span>
+            </div>
+
+            <div class="row g-3 text-center">
+                <div class="col-md-3 col-6">
+                    <div class="p-3 rounded style-box" style="background: rgba(0,0,0,0.25);">
+                        <div class="score-badge" id="widgetScore">--</div>
+                        <div class="small text-muted text-uppercase">Mức Năng Lượng</div>
+                        <div class="fw-bold text-warning" id="widgetRating">Đang tải...</div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-6">
+                    <div class="p-3 rounded style-box" style="background: rgba(0,0,0,0.25);">
+                        <div class="small text-muted text-uppercase mb-2"><i class="bi bi-clock-history"></i> Khung Giờ</div>
+                        <div id="widgetHours">
+                            <span class="tag-badge">Đang tính...</span>
+                        </div>
+                        <div class="small text-danger mt-1" style="font-size: 0.78rem;" id="widgetClashingHour"><i class="bi bi-exclamation-triangle"></i> Kỵ: Giờ Tuất</div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-6">
+                    <div class="p-3 rounded style-box" style="background: rgba(0,0,0,0.25);">
+                        <div class="small text-muted text-uppercase mb-2"><i class="bi bi-palette-fill"></i> Màu Hợp & Kỵ</div>
+                        <div id="widgetColors">
+                            <span class="tag-badge tag-badge-green">Vàng</span>
+                        </div>
+                        <div class="mt-1" style="font-size: 0.78rem;" id="widgetUnluckyColors">
+                            <span class="badge bg-danger text-white">Kỵ màu: Đỏ, Tím</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-6">
+                    <div class="p-3 rounded style-box" style="background: rgba(0,0,0,0.25);">
+                        <div class="small text-muted text-uppercase mb-2"><i class="bi bi-compass-fill"></i> Hướng Xuất Hành</div>
+                        <div class="small fw-semibold" id="widgetDirections">
+                            Hỷ Thần: Đông Nam<br>Tài Thần: Đông Bắc
+                        </div>
+                        <div class="small text-danger mt-1" style="font-size: 0.78rem;" id="widgetHacThan">Hướng kỵ: Chính Nam</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Recommendations for Maximum Luck & Success -->
+            <div class="p-3 rounded mt-3" style="background: rgba(94, 53, 177, 0.2); border: 1px solid rgba(253, 216, 53, 0.35);">
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                    <h5 class="text-warning mb-0 fs-6"><i class="bi bi-star-fill me-2"></i>Đề Xuất & Gợi Ý Để Thuận Lợi Nhất Hôm Nay:</h5>
+                    <a href="/tro-ly-ai.html" class="btn btn-sm btn-outline-warning"><i class="bi bi-robot me-1"></i>Hỏi Trợ Lý AI 24/7</a>
+                </div>
+                <p class="mb-2 text-light" style="font-size: 0.95rem;" id="widgetVipTip">Tĩnh tâm, hành sự thận trọng và ưu tiên hoàn thành công việc quan trọng vào khung giờ Hoàng Đạo hợp tuổi.</p>
+
+                <div class="row g-2 mt-1">
+                    <div class="col-md-6">
+                        <div class="p-2 rounded" style="background: rgba(40, 167, 69, 0.15); border: 1px solid rgba(40, 167, 69, 0.3);">
+                            <small class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>NÊN ƯU TIÊN LÀM:</small>
+                            <div class="small text-light mt-1" id="widgetDos">Khai trương, gặp gỡ đối tác, hoàn thành công việc lớn.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-2 rounded" style="background: rgba(220, 53, 69, 0.15); border: 1px solid rgba(220, 53, 69, 0.3);">
+                            <small class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>CẦN THẬN TRỌNG TRÁNH:</small>
+                            <div class="small text-light mt-1" id="widgetDonts">Tránh tranh cãi, hạn chế đi xa giờ kỵ.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3 mt-2 flex-wrap" style="font-size: 0.88rem;">
+                    <span class="text-warning"><i class="bi bi-hash"></i> Số hợp mệnh: <strong class="text-white" id="widgetNumbers">4, 9, 2, 8</strong></span>
+                    <span class="text-danger"><i class="bi bi-x-octagon-fill"></i> Số kỵ: <strong class="text-danger" id="widgetUnluckyNumbers">3, 7</strong></span>
+                    <span class="text-info"><i class="bi bi-gem"></i> Vật phẩm bổ trợ: <strong class="text-white" id="widgetFengshuiItem">Trang Sức Bạc / Thạch Anh Vàng</strong></span>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- 2. DIVINATION STAGE -->
+        <div class="custom-card shadow stage-box">
+            <h2 class="fw-bold mb-2">🔮 Bốc Quẻ Kinh Dịch Hằng Ngày</h2>
+            <p class="text-muted mb-4">Giữ tâm thành kính, tĩnh tâm nhắm mắt suy nghĩ về ngày hôm nay và bấm gieo quẻ</p>
+
+            <div class="jar-icon-wrapper" id="jarContainer" onclick="handleDraw()">
+                <i class="bi bi-scroll"></i>
+            </div>
+
+            <div>
+                <button class="btn btn-gold btn-lg" id="btnDraw" onclick="handleDraw()">
+                    <i class="bi bi-magic"></i> BỐC QUẺ NGAY HÔM NAY
+                </button>
+            </div>
+
+            <!-- Result Box -->
+            <div id="resultBox" class="result-box">
+                <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom border-secondary">
+                    <div class="d-flex align-items-center">
+                        <span class="display-3 text-warning me-3" id="hexSymbol">☰</span>
+                        <div>
+                            <h3 class="fw-bold mb-1" id="hexName">Quẻ Thuần Càn</h3>
+                            <div class="text-warning small fw-semibold" id="hexTitle">Càn Vi Thiên - Rồng Bay Lượn Trên Trời</div>
+                        </div>
+                    </div>
+                    <span class="badge bg-success fs-6 px-3 py-2" id="hexNature">Đại Cát</span>
+                </div>
+
+                <div class="thoan-tu-quote" id="hexThoanTu">
+                    "Càn: Nguyên, Hanh, Lợi, Trinh. Rồng gặp mây, vạn sự thuận lợi."
+                </div>
+
+                <p class="lead mb-4" id="hexSummary">
+                    Quẻ Càn tượng trưng cho sức mạnh vô biên của Thiên đạo, vận khí mạnh mẽ, thời cơ chín mùi để tiến hành công việc lớn.
+                </p>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                            <h5 class="text-info fs-6 mb-2"><i class="bi bi-briefcase-fill me-2"></i>Công Danh - Sự Nghiệp</h5>
+                            <p class="small text-muted mb-0" id="hexCareer">Công danh rộng mở, có cơ hội thăng tiến mạnh mẽ.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                            <h5 class="text-warning fs-6 mb-2"><i class="bi bi-cash-coin me-2"></i>Tài Lộc - Tiền Bạc</h5>
+                            <p class="small text-muted mb-0" id="hexWealth">Tài lộc dồi dào, tiền bạc hanh thông.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                            <h5 class="text-danger fs-6 mb-2"><i class="bi bi-heart-fill me-2"></i>Tình Duyên - Gia Đạo</h5>
+                            <p class="small text-muted mb-0" id="hexLove">Tình duyên nồng thắm, gia đạo êm ấm.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                            <h5 class="text-success fs-6 mb-2"><i class="bi bi-activity me-2"></i>Sức Khỏe - Thần Khí</h5>
+                            <p class="small text-muted mb-0" id="hexHealth">Thần khí phấn chấn, cơ thể khỏe mạnh.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 rounded" style="background: rgba(94, 53, 177, 0.25); border: 1px solid var(--primary-color);">
+                    <h5 class="text-warning fs-6 mb-1"><i class="bi bi-lightbulb-fill me-2"></i>Lời Khuyên Hành Động Ngày Hôm Nay:</h5>
+                    <p class="mb-0 small" id="hexAdvice">Hãy tự tin hành động, quyết đoán trong công việc nhưng tránh kiêu ngạo.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. DRAW HISTORY -->
+        <div class="custom-card shadow">
+            <h4 class="text-warning mb-3"><i class="bi bi-clock-history me-2"></i>Lịch Sử Bốc Quẻ Gần Đây</h4>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th class="text-warning">Ngày Gieo Quẻ</th>
+                            <th class="text-warning">Quẻ Kinh Dịch</th>
+                            <th class="text-warning">Đánh Giá</th>
+                            <th class="text-warning">Lời Khuyên Hành Động</th>
+                            <th class="text-warning text-center">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr><td colspan="5" class="text-center text-muted">Chưa có lịch sử bốc quẻ.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3">
+        <div class="container text-center">
+            <span>&copy; <script>document.write(new Date().getFullYear())</script> Tử Vi Vận Mệnh. All Rights Reserved.</span>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        const deviceId = localStorage.getItem('tuvi_device_id') || `dev_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('tuvi_device_id', deviceId);
+        let historyDataStore = [];
+
+        // 1. Load Daily Energy Widget Data
+
+        async function loadWidgetData() {
+            try {
+                const res = await fetch(`/api/calendar/daily-personalized?birthday=1995-05-15&birth_time=08:30&gender=nam&full_name=Kh%C3%A1ch%20H%C3%A0ng`);
+                const json = await res.json();
+                if (json.status === 200 && json.data) {
+                    const d = json.data;
+                    document.getElementById('widgetScore').innerText = `${d.energy_score}%`;
+                    document.getElementById('widgetRating').innerText = d.energy_rating;
+                    document.getElementById('userAstroTag').innerText = `Mệnh: ${d.user.element} - ${d.user.can_chi}`;
+
+                    // Hours & Clashing Hour
+                    document.getElementById('widgetHours').innerHTML = (d.auspicious_hours || []).map(h => `<span class="tag-badge">${h}</span>`).join('');
+                    if (d.clashing_hour) {
+                        document.getElementById('widgetClashingHour').innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> Kỵ: <strong>${d.clashing_hour}</strong>`;
+                    }
+
+                    // Lucky & Unlucky Colors
+                    document.getElementById('widgetColors').innerHTML = (d.lucky_colors || []).map(c => `<span class="tag-badge tag-badge-green">${c}</span>`).join('');
+                    if (d.unlucky_colors && d.unlucky_colors.length > 0) {
+                        document.getElementById('widgetUnluckyColors').innerHTML = `<span class="badge bg-danger text-white">Kỵ màu: ${d.unlucky_colors.join(', ')}</span>`;
+                    }
+
+                    // Directions & Hac Than
+                    document.getElementById('widgetDirections').innerHTML = `Hỷ Thần: <strong class="text-success">${d.travel_directions.hyThan}</strong><br>Tài Thần: <strong class="text-warning">${d.travel_directions.taiThan}</strong>`;
+                    if (d.travel_directions.hacThan) {
+                        document.getElementById('widgetHacThan').innerHTML = `<i class="bi bi-dash-circle-fill me-1"></i> Hướng kỵ: <strong class="text-danger">${d.travel_directions.hacThan}</strong>`;
+                    }
+
+                    // Recommendations & Action Tips
+                    if (d.vip_action_tip) document.getElementById('widgetVipTip').innerText = d.vip_action_tip;
+                    if (d.dos && d.dos.length > 0) document.getElementById('widgetDos').innerHTML = d.dos.map(x => `• ${x}`).join('<br>');
+                    if (d.donts && d.donts.length > 0) document.getElementById('widgetDonts').innerHTML = d.donts.map(x => `• ${x}`).join('<br>');
+                    if (d.lucky_numbers) document.getElementById('widgetNumbers').innerText = d.lucky_numbers.join(', ');
+                    if (d.unlucky_numbers) document.getElementById('widgetUnluckyNumbers').innerText = d.unlucky_numbers.join(', ');
+                    if (d.fengshui_item) document.getElementById('widgetFengshuiItem').innerText = d.fengshui_item;
+                }
+            } catch (err) {
+
+
+                console.error('Widget error:', err);
+            }
+        }
+
+        // 2. Handle Draw Divination
+        async function handleDraw() {
+            const jar = document.getElementById('jarContainer');
+            const btn = document.getElementById('btnDraw');
+
+            jar.classList.add('shake-anim');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>ĐANG GIEO QUẺ...';
+
+            try {
+                const res = await fetch('/api/divination/draw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-device-id': deviceId },
+                    body: JSON.stringify({ device_id: deviceId })
+                });
+
+                const json = await res.json();
+                setTimeout(() => {
+                    jar.classList.remove('shake-anim');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> XEM LẠI QUẺ HÔM NAY';
+
+                    if (json.status === 200 && json.data && json.data.hexagram) {
+                        displayResult(json.data.hexagram);
+                        loadHistory();
+                    } else {
+                        alert(json.message || 'Lỗi bốc quẻ');
+                    }
+                }, 1200);
+
+            } catch (err) {
+                console.error(err);
+                jar.classList.remove('shake-anim');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-magic me-1"></i> BỐC QUẺ NGAY HÔM NAY';
+            }
+        }
+
+        function displayResult(h) {
+            document.getElementById('hexSymbol').innerText = h.symbol || '☰';
+            document.getElementById('hexName').innerText = h.name;
+            document.getElementById('hexTitle').innerText = h.title;
+            document.getElementById('hexNature').innerText = h.nature || 'Cát Tường';
+            document.getElementById('hexThoanTu').innerText = `"${h.thoan_tu}"`;
+            document.getElementById('hexSummary').innerText = h.summary;
+            document.getElementById('hexCareer').innerText = h.career;
+            document.getElementById('hexWealth').innerText = h.wealth;
+            document.getElementById('hexLove').innerText = h.love;
+            document.getElementById('hexHealth').innerText = h.health;
+            document.getElementById('hexAdvice').innerText = h.daily_advice;
+
+            document.getElementById('resultBox').style.display = 'block';
+            document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 3. Load Draw History & View Detail
+        async function loadHistory() {
+            try {
+                const res = await fetch(`/api/divination/history?device_id=${deviceId}`);
+                const json = await res.json();
+                if (json.status === 200 && json.data) {
+                    const tbody = document.getElementById('historyTableBody');
+                    historyDataStore = json.data || [];
+                    if (historyDataStore.length === 0) return;
+
+                    tbody.innerHTML = historyDataStore.map((item, index) => `
+                        <tr style="cursor: pointer;" onclick="viewHistoryDetail(${index})" title="Nhấn để xem chi tiết quẻ này">
+                            <td><strong>${new Date(item.created_at).toLocaleDateString('vi-VN')}</strong></td>
+                            <td class="text-warning fw-bold">${item.hexagram_name}</td>
+                            <td><span class="badge bg-success">${item.nature}</span></td>
+                            <td>${item.advice}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-warning" onclick="event.stopPropagation(); viewHistoryDetail(${index})">
+                                    <i class="bi bi-eye-fill me-1"></i> Xem Chi Tiết
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function viewHistoryDetail(index) {
+            const item = historyDataStore[index];
+            if (!item) return;
+
+            const hex = item.hexagram || {
+                symbol: '☰',
+                name: item.hexagram_name,
+                title: item.hexagram_name,
+                nature: item.nature,
+                thoan_tu: item.advice,
+                summary: item.summary,
+                career: 'Công danh phát triển theo vận quẻ.',
+                wealth: 'Tài lộc đơm hoa kết trái.',
+                love: 'Gia đạo bình an.',
+                health: 'Sức khỏe dồi dào.',
+                daily_advice: item.advice
+            };
+
+            displayResult(hex);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadWidgetData();
+            loadHistory();
+        });
+
+    </script>
+</body>
+</html>

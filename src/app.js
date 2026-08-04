@@ -23,6 +23,8 @@ app.get('/tu-vi-doi', (req, res) => res.sendFile(path.join(publicDir, 'tu-vi-doi
 app.get('/van-han-realtime', (req, res) => res.sendFile(path.join(publicDir, 'van-han-realtime.html')));
 app.get('/chon-ngay-tot', (req, res) => res.sendFile(path.join(publicDir, 'chon-ngay-tot.html')));
 app.get('/tro-ly-ai', (req, res) => res.sendFile(path.join(publicDir, 'tro-ly-ai.html')));
+app.get('/boc-que-hang-ngay', (req, res) => res.sendFile(path.join(publicDir, 'boc-que-hang-ngay.html')));
+
 
 app.use(apiLimiter);
 app.use('/', routes);

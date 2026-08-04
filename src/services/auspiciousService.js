@@ -244,7 +244,132 @@ const findPersonalizedAuspiciousDays = (year, month, purpose, personInput) => {
     };
 };
 
+/**
+ * Generate Personalized Daily Energy & Auspicious Hours Widget
+ */
+const getDailyPersonalizedWidget = (personInput, dateInput = new Date()) => {
+    const d = new Date(dateInput);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+
+    const userProfile = buildAstroProfile(
+        personInput.full_name || 'Người dùng',
+        personInput.birthday,
+        personInput.birth_time,
+        personInput.gender
+    );
+
+    const evalResult = evaluatePersonalizedDay(year, month, day, 'khai_truong', userProfile);
+    if (!evalResult) return null;
+
+    // Dynamic Element Color Calculation (Tương Sinh - Tương Hòa vs Tương Khắc)
+    const userElement = (userProfile.nap_am || {}).element || 'Kim';
+    
+    const luckyColorsMap = {
+        Kim: ['Vàng cát', 'Trắng', 'Xám bạc', 'Ánh kim'],
+        Mộc: ['Xanh dương', 'Đen bóng', 'Xanh lá cây', 'Xanh cẩm thạch'],
+        Thủy: ['Trắng', 'Ánh bạc', 'Đen', 'Xanh nước biển'],
+        Hỏa: ['Xanh lá cây', 'Đỏ tươi', 'Hồng', 'Tím'],
+        Thổ: ['Đỏ tươi', 'Hồng sẫm', 'Vàng đất', 'Nâu']
+    };
+    const unluckyColorsMap = {
+        Kim: ['Đỏ tươi', 'Hồng', 'Tím', 'Cam (Hỏa khắc Kim)'],
+        Mộc: ['Trắng', 'Xám bạc', 'Ánh kim (Kim khắc Mộc)'],
+        Thủy: ['Vàng đất', 'Nâu cát (Thổ khắc Thủy)'],
+        Hỏa: ['Đen bóng', 'Xanh thẫm (Thủy khắc Hỏa)'],
+        Thổ: ['Xanh lá cây', 'Xanh lục (Mộc khắc Thổ)']
+    };
+    const luckyColors = luckyColorsMap[userElement] || luckyColorsMap.Kim;
+    const unluckyColors = unluckyColorsMap[userElement] || unluckyColorsMap.Kim;
+
+    // Travel directions & Clashing Direction (Hỷ Thần / Tài Thần / Hắc Thần)
+    const canDay = evalResult.can_chi.day.split(' ')[0] || 'Giáp';
+    const directionsMap = {
+        Giáp: { hyThan: 'Đông Nam', taiThan: 'Đông Bắc', hacThan: 'Chính Tây' },
+        Ất: { hyThan: 'Đông Bắc', taiThan: 'Đông Nam', hacThan: 'Chính Tây' },
+        Bính: { hyThan: 'Tây Nam', taiThan: 'Chính Đông', hacThan: 'Chính Bắc' },
+        Đinh: { hyThan: 'Chính Nam', taiThan: 'Chính Đông', hacThan: 'Chính Bắc' },
+        Mậu: { hyThan: 'Đông Nam', taiThan: 'Chính Bắc', hacThan: 'Chính Đông' },
+        Kỷ: { hyThan: 'Đông Bắc', taiThan: 'Chính Nam', hacThan: 'Chính Đông' },
+        Canh: { hyThan: 'Tây Bắc', taiThan: 'Tây Nam', hacThan: 'Chính Nam' },
+        Tân: { hyThan: 'Tây Nam', taiThan: 'Tây Nam', hacThan: 'Chính Nam' },
+        Nhâm: { hyThan: 'Chính Nam', taiThan: 'Tây Bắc', hacThan: 'Chính Nam' },
+        Quý: { hyThan: 'Đông Nam', taiThan: 'Chính Tây', hacThan: 'Chính Bắc' }
+    };
+    const directions = directionsMap[canDay] || directionsMap.Giáp;
+
+    // Lucky & Unlucky Numbers by Element
+    const luckyNumbersMap = {
+        Kim: { lucky: ['4', '9', '2', '8'], unlucky: ['3', '7'] },
+        Mộc: { lucky: ['3', '8', '1', '6'], unlucky: ['4', '9'] },
+        Thủy: { lucky: ['1', '6', '4', '9'], unlucky: ['2', '5', '8'] },
+        Hỏa: { lucky: { lucky: ['2', '7', '3', '8'], unlucky: ['1', '6'] } },
+        Thổ: { lucky: ['5', '0', '2', '7'], unlucky: ['3', '8'] }
+    };
+    const luckyNumObj = luckyNumbersMap[userElement] || { lucky: ['4', '9', '2'], unlucky: ['3', '7'] };
+    const luckyNumbers = Array.isArray(luckyNumObj.lucky) ? luckyNumObj.lucky : ['4', '9', '2'];
+    const unluckyNumbers = Array.isArray(luckyNumObj.unlucky) ? luckyNumObj.unlucky : ['3', '7'];
+
+    // Fengshui Lucky Item
+    const fengshuiItemsMap = {
+        Kim: 'Đồng Hồ Kim Loại / Trang Sức Bạc / Thạch Anh Vàng',
+        Mộc: 'Vòng Gỗ Trầm Hương / Thạch Anh Xanh / Ngọc Bích',
+        Thủy: 'Thạch Anh Đen / Nhẫn Bạc Đen / Mã Não Đen',
+        Hỏa: 'Thạch Anh Hồng / Vòng Cẩm Thạch / Ngọc Hồng Bích',
+        Thổ: 'Vòng Mắt Hổ Vàng Nâu / Thạch Anh Vàng / Chuỗi Hổ Phách'
+    };
+    const fengshuiItem = fengshuiItemsMap[userElement] || 'Vòng Tay Phong Thủy Hợp Mệnh';
+
+    // Clashing Hours to Avoid (Giờ Lục Xung chi tuổi)
+    const userCanChi = userProfile.can_chi || 'Canh Thìn';
+    const userBranch = userCanChi.split(' ').pop() || 'Thìn';
+    const clashingHourBranch = LUC_XUNG_MAP[userBranch] || 'Tuất';
+    const clashingHourText = `Giờ ${clashingHourBranch} (Xung tuổi ${userBranch})`;
+
+    // Best Action Tip
+    let vipActionTip = 'Tĩnh tâm, hành sự thận trọng và ưu tiên hoàn thành công việc quan trọng vào khung giờ Hoàng Đạo hợp tuổi.';
+    if (evalResult.score >= 75) {
+        vipActionTip = `Hôm nay vận khí ngày (${evalResult.can_chi.day}) rất vượng! Mệnh ${userElement} nên chủ động mở rộng mối quan hệ, ký kết thỏa thuận và xuất hành theo hướng ${directions.hyThan} để đón may mắn tối đa.`;
+    } else if (evalResult.score >= 50) {
+        vipActionTip = `Ngày Bình Hòa (${evalResult.can_chi.day}) thích hợp để tập trung làm việc ổn định, tích lũy kiến thức, mang ${fengshuiItem} để bổ trợ sinh khí.`;
+    } else {
+        vipActionTip = `Hôm nay ngày (${evalResult.can_chi.day}) có chút xung kỵ với tuổi ${userBranch}. Hãy giữ thái độ khiêm nhường, tránh vội vã đưa ra quyết định tài chính lớn.`;
+    }
+
+    return {
+        user: {
+            full_name: personInput.full_name || 'Người dùng',
+            can_chi: userProfile.can_chi,
+            element: userElement,
+            cung_phi: userProfile.cung_phi
+        },
+        date: evalResult.date,
+        can_chi_day: evalResult.can_chi.day,
+        energy_score: evalResult.score,
+        energy_rating: evalResult.rating_label,
+        energy_badge: evalResult.rating_badge,
+        reasons: evalResult.reasons,
+        warnings: evalResult.warnings,
+        auspicious_hours: evalResult.personalized_hours,
+        clashing_hour: clashingHourText,
+        lucky_colors: luckyColors,
+        unlucky_colors: unluckyColors,
+        lucky_numbers: luckyNumbers,
+        unlucky_numbers: unluckyNumbers,
+        fengshui_item: fengshuiItem,
+        travel_directions: directions,
+        vip_action_tip: vipActionTip,
+        dos: evalResult.reasons.length > 0 ? evalResult.reasons : ['Khai trương, gặp gỡ đối tác', 'Xuất hành hướng Hỷ Thần'],
+        donts: evalResult.warnings.length > 0 ? evalResult.warnings : ['Hạn chế tranh cãi giờ xung', 'Tránh đầu tư mạo hiểm']
+    };
+};
+
+
+
 module.exports = {
     evaluatePersonalizedDay,
     findPersonalizedAuspiciousDays,
+    getDailyPersonalizedWidget
 };
+

@@ -257,3 +257,74 @@ exports.getPersonalizedAuspiciousDays = async (req, res) => {
         });
     }
 };
+
+/**
+ * GET /api/calendar/daily-personalized
+ * Personalized Daily Auspicious Energy & Hours Widget for Web / Mobile Apps (Redis Cached)
+ */
+exports.getDailyPersonalizedWidgetController = async (req, res) => {
+    try {
+        const body = req.body || {};
+        const query = req.query || {};
+
+        const birthday = body.birthday || query.birthday;
+        const birth_time = body.birth_time || query.birth_time;
+        const gender = body.gender || query.gender;
+
+        let personInput = null;
+        if (birthday && birth_time && gender) {
+            personInput = {
+                full_name: body.full_name || query.full_name || 'Người dùng',
+                birthday,
+                birth_time,
+                gender
+            };
+        } else {
+            const userId = req.user ? req.user.id : (body.user_id || query.user_id);
+            const deviceId = body.device_id || query.device_id || req.headers['x-device-id'];
+            let dbUser = null;
+            if (userId) {
+                dbUser = await findUserById(userId);
+            } else if (deviceId) {
+                dbUser = await findUserByDeviceId(deviceId);
+            }
+            if (dbUser && dbUser.birthday && dbUser.birth_time && dbUser.gender) {
+                personInput = {
+                    full_name: dbUser.full_name || 'Người dùng',
+                    birthday: dbUser.birthday,
+                    birth_time: dbUser.birth_time,
+                    gender: dbUser.gender
+                };
+            } else {
+                // Fallback default profile for guest visitors
+                personInput = {
+                    full_name: 'Khách Vãng Lai',
+                    birthday: '1995-05-15',
+                    birth_time: '08:30',
+                    gender: 'nam'
+                };
+            }
+        }
+
+
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const cacheKey = `calendar:daily_widget_v3:${Buffer.from(`${personInput.birthday}_${personInput.birth_time}_${personInput.gender}_${todayStr}`).toString('base64').slice(0, 48)}`;
+
+
+        const cached = await cacheService.get(cacheKey);
+        if (cached) {
+            res.set('Cache-Control', 'public, max-age=300');
+            return res.json({ status: 200, error: 0, message: 'OK (cached)', data: cached });
+        }
+
+        const widget = auspiciousService.getDailyPersonalizedWidget(personInput, new Date());
+        await cacheService.set(cacheKey, widget, 86400); // 24h cache
+
+        res.set('Cache-Control', 'public, max-age=300');
+        return res.json({ status: 200, error: 0, message: 'OK', data: widget });
+    } catch (err) {
+        console.error('getDailyPersonalizedWidgetController error:', err);
+        return res.status(500).json({ status: 500, error: 1, message: 'Lỗi server khi lấy widget năng lượng cá nhân hóa' });
+    }
+};
+
