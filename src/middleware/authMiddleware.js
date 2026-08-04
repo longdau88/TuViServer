@@ -28,3 +28,29 @@ exports.authenticateToken = (req, res, next) => {
         next();
     });
 };
+
+exports.requireAdmin = async (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Cho phép token hệ thống web-ui hoặc token có role/sub admin
+    if (req.user.role === 'admin' || req.user.sub === 'admin' || req.user.sub === 'web-ui') {
+        return next();
+    }
+
+    try {
+        const { findUserById, findUserByEmail } = require('../models/userModel');
+        let user = null;
+        if (req.user.id) user = await findUserById(req.user.id);
+        else if (req.user.email) user = await findUserByEmail(req.user.email);
+
+        if (user && user.role === 'admin') {
+            return next();
+        }
+    } catch (e) {
+        console.error('requireAdmin check error:', e);
+    }
+
+    return res.status(403).json({ message: 'Forbidden: Yêu cầu quyền Admin' });
+};

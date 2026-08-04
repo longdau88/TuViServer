@@ -18,9 +18,10 @@ if (isProduction() && (!authUsername || !authPassword)) {
     throw new Error('AUTH_USERNAME and AUTH_PASSWORD must be set in production');
 }
 
-const signAccessToken = (subject) => jwt.sign(
+const signAccessToken = (subject, role = 'admin') => jwt.sign(
     {
         sub: subject,
+        role: role,
         scopes: [],
     },
     tokenSecret,
@@ -29,6 +30,7 @@ const signAccessToken = (subject) => jwt.sign(
         algorithm: 'HS256',
     },
 );
+
 
 exports.getToken = (req, res) => {
     const { grant_type, username, password } = req.body;

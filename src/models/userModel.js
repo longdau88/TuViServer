@@ -63,6 +63,10 @@ const formatUserRow = (row) => {
         avatar_url: avatarUrl,
         firebase_token: row.firebase_token || null,
         user_code: row.user_code || null,
+        role: row.role || 'user',
+        is_vip: Boolean(row.is_vip),
+        vip_expires_at: row.vip_expires_at ? formatDateToYMD(row.vip_expires_at) : null,
+        ai_quota: row.ai_quota !== undefined && row.ai_quota !== null ? Number(row.ai_quota) : 5,
         created_at: row.created_at,
         updated_at: row.updated_at,
         can_chi: row.can_chi || null,
@@ -174,6 +178,10 @@ const createUsersTable = async () => {
       avatar_url VARCHAR(512) NULL,
       firebase_token TEXT NULL,
       user_code VARCHAR(100) NULL,
+      role VARCHAR(50) DEFAULT 'user',
+      is_vip TINYINT(1) DEFAULT 0,
+      vip_expires_at DATETIME NULL,
+      ai_quota INT DEFAULT 5,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (id)
@@ -188,11 +196,41 @@ const createUsersTable = async () => {
         'CREATE INDEX idx_users_device_id ON users (device_id)',
     );
 
-    const [avatarUrlColumns] = await pool.query("SHOW COLUMNS FROM users LIKE 'avatar_url'");
-    if (avatarUrlColumns.length === 0) {
-        await pool.query('ALTER TABLE users ADD COLUMN avatar_url VARCHAR(512) NULL AFTER device_info');
-        console.log('[DB] Added missing column: users.avatar_url');
+    // Auto add admin/vip columns if users table exists
+    const userColumnsToEnsure = [
+        { name: 'role', type: "VARCHAR(50) DEFAULT 'user'" },
+        { name: 'is_vip', type: "TINYINT(1) DEFAULT 0" },
+        { name: 'vip_expires_at', type: "DATETIME NULL" },
+        { name: 'ai_quota', type: "INT DEFAULT 5" },
+        { name: 'avatar_url', type: "VARCHAR(512) NULL" },
+        { name: 'birth_time', type: "TIME NULL" },
+        { name: 'password_hash', type: "VARCHAR(255) NULL" },
+    ];
+
+    for (const col of userColumnsToEnsure) {
+        const [colExists] = await pool.query("SHOW COLUMNS FROM users LIKE ?", [col.name]);
+        if (colExists.length === 0) {
+            await pool.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+            console.log(`[DB] Added missing column: users.${col.name}`);
+        }
     }
+
+    // Seed default admin in Database if no admin exists or password_hash is missing
+    const { hashPassword } = require('../utils/hashUtils');
+    const [adminUsers] = await pool.query("SELECT id, password_hash FROM users WHERE role = 'admin' LIMIT 1");
+    if (adminUsers.length === 0) {
+        const defaultAdminPassHash = hashPassword('admin123');
+        await pool.query(
+            `INSERT INTO users (full_name, email, role, password_hash, is_vip, ai_quota) VALUES (?, ?, 'admin', ?, 1, 99999)`,
+            ['admin', 'admin@tuvi.com', defaultAdminPassHash]
+        );
+        console.log('[DB] Seeded initial Admin user in Database: admin / admin@tuvi.com (Password: admin123)');
+    } else if (!adminUsers[0].password_hash) {
+        const defaultAdminPassHash = hashPassword('admin123');
+        await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [defaultAdminPassHash, adminUsers[0].id]);
+        console.log('[DB] Updated Admin password_hash in Database to default: admin123');
+    }
+
 
     const [avatarBase64Columns] = await pool.query("SHOW COLUMNS FROM users LIKE 'avatar_base64'");
     if (avatarBase64Columns.length > 0) {
@@ -200,11 +238,6 @@ const createUsersTable = async () => {
         console.log('[DB] Dropped deprecated column: users.avatar_base64');
     }
 
-    const [birthTimeColumns] = await pool.query("SHOW COLUMNS FROM users LIKE 'birth_time'");
-    if (birthTimeColumns.length === 0) {
-        await pool.query('ALTER TABLE users ADD COLUMN birth_time TIME NULL AFTER birthday');
-        console.log('[DB] Added missing column: users.birth_time');
-    }
 
     const sqlAstro = `
     CREATE TABLE IF NOT EXISTS user_astro_profiles (
@@ -235,37 +268,70 @@ const createUsersTable = async () => {
 
     await pool.query(sqlAstro);
 
-    // Add missing columns if table already exists
-    const newColumns = [
-        { name: 'tu_tru', type: 'TEXT NULL' },
-        { name: 'tu_vi', type: 'TEXT NULL' },
-        { name: 'huong', type: 'TEXT NULL' },
-        { name: 'mau_sac_vat_pham', type: 'TEXT NULL' },
-        { name: 'bieu_do_ngay_sinh', type: 'TEXT NULL' },
-        { name: 'ngu_hanh_ten', type: 'TEXT NULL' },
-        { name: 'so_net', type: 'TEXT NULL' },
-    ];
+    // Create VIP packages table
+    const sqlPackages = `
+    CREATE TABLE IF NOT EXISTS vip_packages (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      code VARCHAR(100) NOT NULL UNIQUE,
+      name VARCHAR(255) NOT NULL,
+      price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+      duration_days INT NOT NULL DEFAULT 30,
+      ai_quota INT NOT NULL DEFAULT 100,
+      description TEXT NULL,
+      is_active TINYINT(1) DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `;
+    await pool.query(sqlPackages);
 
-    for (const col of newColumns) {
-        const [colExists] = await pool.query("SHOW COLUMNS FROM user_astro_profiles LIKE ?", [col.name]);
-        if (colExists.length === 0) {
-            await pool.query(`ALTER TABLE user_astro_profiles ADD COLUMN ${col.name} ${col.type}`);
-            console.log(`[DB] Added missing column: ${col.name}`);
-        }
+    // Create Transactions table
+    const sqlTransactions = `
+    CREATE TABLE IF NOT EXISTS transactions (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      user_id INT UNSIGNED NOT NULL,
+      package_code VARCHAR(100) NULL,
+      amount DECIMAL(10, 2) NOT NULL,
+      payment_method VARCHAR(50) DEFAULT 'VietQR',
+      status VARCHAR(50) DEFAULT 'PENDING',
+      transaction_ref VARCHAR(255) NULL,
+      paid_at DATETIME NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      CONSTRAINT fk_trans_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `;
+    await pool.query(sqlTransactions);
+
+    // Auto add paid_at column if missing
+    const [paidAtCol] = await pool.query("SHOW COLUMNS FROM transactions LIKE 'paid_at'");
+    if (paidAtCol.length === 0) {
+        await pool.query("ALTER TABLE transactions ADD COLUMN paid_at DATETIME NULL");
     }
 
-    // Remove deprecated astro_profile column if exists
-    const [astroCol] = await pool.query("SHOW COLUMNS FROM user_astro_profiles LIKE 'astro_profile'");
-    if (astroCol.length > 0) {
-        await pool.query('ALTER TABLE user_astro_profiles DROP COLUMN astro_profile');
-        console.log('[DB] Dropped deprecated astro_profile column');
+    // Seed default VIP packages if empty
+    const [pkgs] = await pool.query("SELECT id FROM vip_packages LIMIT 1");
+    if (pkgs.length === 0) {
+        await pool.query(`
+            INSERT INTO vip_packages (code, name, price, duration_days, ai_quota, description) VALUES
+            ('VIP_1M', 'Gói VIP 1 Tháng', 99000, 30, 150, 'Quyền lợi: Xem tử vi trọn gói, 150 lượt AI Chat/ngày'),
+            ('VIP_3M', 'Gói VIP 3 Tháng', 249000, 90, 300, 'Tiết kiệm 20%: Xem tử vi trọn gói, 300 lượt AI Chat/ngày'),
+            ('VIP_1Y', 'Gói VIP 1 Năm', 799000, 365, 999, 'Tiết kiệm 40%: VIP trọn năm, AI Chat không giới hạn')
+        `);
+        console.log('[DB] Seeded initial VIP packages');
     }
+
+    // Clean up sample demo transactions if any
+    await pool.query("DELETE FROM transactions WHERE transaction_ref IN ('FT260804001928', 'MM260804008812')");
 };
+
+
 
 const findUserByDeviceIdFromDb = async (deviceId) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,
-             u.device_id, u.device_info, u.avatar_url, u.firebase_token, u.user_code, u.created_at, u.updated_at,
+             u.device_id, u.device_info, u.avatar_url, u.firebase_token, u.user_code,
+             u.role, u.is_vip, u.vip_expires_at, u.ai_quota, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
         FROM users u
@@ -295,7 +361,8 @@ const findUserByDeviceId = async (deviceId) => {
 const findUserByIdFromDb = async (userId) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,
-             u.device_id, u.device_info, u.avatar_url, u.firebase_token, u.user_code, u.created_at, u.updated_at,
+             u.device_id, u.device_info, u.avatar_url, u.firebase_token, u.user_code,
+             u.role, u.is_vip, u.vip_expires_at, u.ai_quota, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
         FROM users u
@@ -325,16 +392,189 @@ const findUserById = async (userId) => {
 const findUserByEmail = async (email) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,  
-             u.device_id, u.device_info, u.avatar_url, u.firebase_token, u.user_code, u.created_at, u.updated_at,
+             u.device_id, u.device_info, u.avatar_url, u.firebase_token, u.user_code,
+             u.role, u.is_vip, u.vip_expires_at, u.ai_quota, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
         FROM users u
-        LEFT JOIN user_astro_profiles p ON u.id = p.user_id
         WHERE u.email = ?
         LIMIT 1
     `;
     const [rows] = await pool.query(sql, [email]);
     return rows.length > 0 ? formatUserRow(rows[0]) : null;
+};
+
+const getAllUsers = async (search = '', limit = 50, offset = 0) => {
+
+    let sql = `
+        SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.role, u.is_vip, u.vip_expires_at, u.ai_quota, u.created_at
+        FROM users u
+    `;
+    const params = [];
+    if (search) {
+        sql += ` WHERE u.full_name LIKE ? OR u.email LIKE ?`;
+        params.push(`%${search}%`, `%${search}%`);
+    }
+    sql += ` ORDER BY u.id DESC LIMIT ? OFFSET ?`;
+    params.push(Number(limit), Number(offset));
+
+    const [rows] = await pool.query(sql, params);
+    
+    let countSql = `SELECT COUNT(*) as total FROM users`;
+    const countParams = [];
+    if (search) {
+        countSql += ` WHERE full_name LIKE ? OR email LIKE ?`;
+        countParams.push(`%${search}%`, `%${search}%`);
+    }
+    const [countRows] = await pool.query(countSql, countParams);
+    
+    return {
+        users: rows.map(r => ({
+            id: r.id,
+            full_name: r.full_name,
+            email: r.email,
+            birthday: r.birthday ? formatDateToYMD(r.birthday) : null,
+            gender: r.gender,
+            role: r.role || 'user',
+            is_vip: Boolean(r.is_vip),
+            vip_expires_at: r.vip_expires_at ? formatDateToYMD(r.vip_expires_at) : null,
+            ai_quota: r.ai_quota !== null ? r.ai_quota : 5,
+            created_at: r.created_at
+        })),
+        total: countRows[0].total
+    };
+};
+
+const getUsersByRole = async (targetRole = 'user', search = '', limit = 50, offset = 0) => {
+
+    let sql = `
+        SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.role, u.is_vip, u.vip_expires_at, u.ai_quota, u.created_at
+        FROM users u
+        WHERE u.role = ?
+    `;
+    const params = [targetRole];
+    if (search) {
+        sql += ` AND (u.full_name LIKE ? OR u.email LIKE ?)`;
+        params.push(`%${search}%`, `%${search}%`);
+    }
+    sql += ` ORDER BY u.id DESC LIMIT ? OFFSET ?`;
+    params.push(Number(limit), Number(offset));
+
+    const [rows] = await pool.query(sql, params);
+    
+    let countSql = `SELECT COUNT(*) as total FROM users WHERE role = ?`;
+    const countParams = [targetRole];
+    if (search) {
+        countSql += ` AND (full_name LIKE ? OR email LIKE ?)`;
+        countParams.push(`%${search}%`, `%${search}%`);
+    }
+    const [countRows] = await pool.query(countSql, countParams);
+    
+    return {
+        users: rows.map(r => ({
+            id: r.id,
+            full_name: r.full_name,
+            email: r.email,
+            birthday: r.birthday ? formatDateToYMD(r.birthday) : null,
+            gender: r.gender,
+            role: r.role || 'user',
+            is_vip: Boolean(r.is_vip),
+            vip_expires_at: r.vip_expires_at ? formatDateToYMD(r.vip_expires_at) : null,
+            ai_quota: r.ai_quota !== null ? r.ai_quota : 5,
+            created_at: r.created_at
+        })),
+        total: countRows[0].total
+    };
+};
+
+const createUserAccount = async (userData) => {
+    const { hashPassword } = require('../utils/hashUtils');
+    const { full_name, email, password, role = 'user', gender = null, birthday = null, is_vip = 0, ai_quota = 5 } = userData;
+    
+    const [existing] = await pool.query(`SELECT id FROM users WHERE email = ? LIMIT 1`, [email]);
+    if (existing.length > 0) {
+        const err = new Error('Email đã tồn tại trong hệ thống');
+        err.status = 400;
+        throw err;
+    }
+
+    const rawPassword = (password && password.trim()) ? password.trim() : '123456';
+    const password_hash = hashPassword(rawPassword);
+    const sql = `
+        INSERT INTO users (full_name, email, role, password_hash, gender, birthday, is_vip, ai_quota)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const [result] = await pool.query(sql, [full_name, email, role, password_hash, gender, birthday, is_vip ? 1 : 0, ai_quota]);
+    return result.insertId;
+};
+
+const updateUserAccount = async (userId, userData) => {
+    const { hashPassword } = require('../utils/hashUtils');
+    const { full_name, email, password, role, gender, is_vip, ai_quota, days } = userData;
+
+    const fields = [];
+    const params = [];
+
+    if (full_name !== undefined) { fields.push('full_name = ?'); params.push(full_name); }
+    if (email !== undefined) { fields.push('email = ?'); params.push(email); }
+    if (role !== undefined) { fields.push('role = ?'); params.push(role); }
+    if (gender !== undefined) { fields.push('gender = ?'); params.push(gender); }
+    if (ai_quota !== undefined) { fields.push('ai_quota = ?'); params.push(Number(ai_quota)); }
+    if (password && password.trim()) {
+        fields.push('password_hash = ?');
+        params.push(hashPassword(password.trim()));
+    }
+    if (is_vip !== undefined) {
+        fields.push('is_vip = ?');
+        params.push(is_vip ? 1 : 0);
+        if (is_vip) {
+            const d = new Date();
+            d.setDate(d.getDate() + Number(days || 30));
+            fields.push('vip_expires_at = ?');
+            params.push(d.toISOString().slice(0, 19).replace('T', ' '));
+        } else {
+            fields.push('vip_expires_at = NULL');
+        }
+    }
+
+    if (fields.length === 0) return;
+
+    params.push(userId);
+    const sql = `UPDATE users SET ${fields.join(', ')} WHERE id = ?`;
+    await pool.query(sql, params);
+};
+
+const deleteUserAccount = async (userId) => {
+    await pool.query(`DELETE FROM users WHERE id = ?`, [userId]);
+};
+
+const updateUserRole = async (userId, role) => {
+    await pool.query(`UPDATE users SET role = ? WHERE id = ?`, [role, userId]);
+};
+
+const updateUserVip = async (userId, isVip, days = 30, quota = 100) => {
+    let expiresAt = null;
+    if (isVip) {
+        const d = new Date();
+        d.setDate(d.getDate() + Number(days));
+        expiresAt = d.toISOString().slice(0, 19).replace('T', ' ');
+    }
+    await pool.query(
+        `UPDATE users SET is_vip = ?, vip_expires_at = ?, ai_quota = ? WHERE id = ?`,
+        [isVip ? 1 : 0, expiresAt, quota, userId]
+    );
+};
+
+const getAdminStats = async () => {
+    const [userCount] = await pool.query(`SELECT COUNT(*) as totalUsers, SUM(CASE WHEN is_vip = 1 THEN 1 ELSE 0 END) as vipUsers FROM users`);
+    const [transCount] = await pool.query(`SELECT COUNT(*) as totalTrans, SUM(CASE WHEN status = 'SUCCESS' THEN amount ELSE 0 END) as totalRevenue FROM transactions`);
+    return {
+        totalUsers: userCount[0].totalUsers || 0,
+        vipUsers: userCount[0].vipUsers || 0,
+        totalTransactions: transCount[0].totalTrans || 0,
+        totalRevenue: transCount[0].totalRevenue || 0
+    };
 };
 
 const createDuplicateEmailError = (email) => {
@@ -366,6 +606,99 @@ const generateUserCode = () => {
 };
 
 
+const getAllTransactions = async ({ status = '', search = '', limit = 50, offset = 0 } = {}) => {
+    let sql = `
+        SELECT t.id, t.user_id, t.package_code, t.amount, t.payment_method, t.status, 
+               t.transaction_ref, t.created_at, t.paid_at,
+               u.full_name as user_name, u.email as user_email
+        FROM transactions t
+        LEFT JOIN users u ON t.user_id = u.id
+        WHERE 1=1
+    `;
+    const params = [];
+    if (status) {
+        sql += ` AND t.status = ?`;
+        params.push(status);
+    }
+    if (search) {
+        sql += ` AND (t.transaction_ref LIKE ? OR u.full_name LIKE ? OR u.email LIKE ? OR t.package_code LIKE ?)`;
+        params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+    }
+    sql += ` ORDER BY t.id DESC LIMIT ? OFFSET ?`;
+    params.push(Number(limit), Number(offset));
+
+    const [rows] = await pool.query(sql, params);
+
+    let countSql = `
+        SELECT COUNT(*) as total, 
+               SUM(CASE WHEN t.status = 'SUCCESS' THEN t.amount ELSE 0 END) as totalRevenue,
+               SUM(CASE WHEN t.status = 'SUCCESS' THEN 1 ELSE 0 END) as successCount,
+               SUM(CASE WHEN t.status = 'PENDING' THEN 1 ELSE 0 END) as pendingCount
+        FROM transactions t
+        LEFT JOIN users u ON t.user_id = u.id
+        WHERE 1=1
+    `;
+    const countParams = [];
+    if (status) {
+        countSql += ` AND t.status = ?`;
+        countParams.push(status);
+    }
+    if (search) {
+        countSql += ` AND (t.transaction_ref LIKE ? OR u.full_name LIKE ? OR u.email LIKE ? OR t.package_code LIKE ?)`;
+        countParams.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+    }
+    const [countRows] = await pool.query(countSql, countParams);
+
+    return {
+        transactions: rows.map(r => ({
+            id: r.id,
+            user_id: r.user_id,
+            user_name: r.user_name || 'N/A',
+            user_email: r.user_email || 'N/A',
+            package_code: r.package_code || 'N/A',
+            amount: Number(r.amount),
+            payment_method: r.payment_method || 'VietQR',
+            status: r.status,
+            transaction_ref: r.transaction_ref || `TRANS_${r.id}`,
+            created_at: r.created_at,
+            paid_at: r.paid_at || (r.status === 'SUCCESS' ? r.created_at : null)
+        })),
+        total: countRows[0].total || 0,
+        totalRevenue: Number(countRows[0].totalRevenue || 0),
+        successCount: Number(countRows[0].successCount || 0),
+        pendingCount: Number(countRows[0].pendingCount || 0)
+    };
+};
+
+const updateTransactionStatus = async (transId, status) => {
+    const paidAt = status === 'SUCCESS' ? new Date().toISOString().slice(0, 19).replace('T', ' ') : null;
+    await pool.query(
+        `UPDATE transactions SET status = ?, paid_at = ? WHERE id = ?`,
+        [status, paidAt, transId]
+    );
+
+    if (status === 'SUCCESS') {
+        const [trans] = await pool.query(`SELECT user_id, package_code FROM transactions WHERE id = ?`, [transId]);
+        if (trans.length > 0) {
+            const { user_id, package_code } = trans[0];
+            let days = 30;
+            let quota = 100;
+            if (package_code) {
+                const [pkgs] = await pool.query(`SELECT duration_days, ai_quota FROM vip_packages WHERE code = ?`, [package_code]);
+                if (pkgs.length > 0) {
+                    days = pkgs[0].duration_days;
+                    quota = pkgs[0].ai_quota;
+                }
+            }
+            await updateUserVip(user_id, true, days, quota);
+        }
+    }
+};
+
+const deleteTransaction = async (transId) => {
+    await pool.query(`DELETE FROM transactions WHERE id = ?`, [transId]);
+};
+
 module.exports = {
   createUsersTable,
   findUserByDeviceIdFromDb,
@@ -379,5 +712,18 @@ module.exports = {
   upsertAstroProfile,
   findUserByDeviceId,
   findUserById,
-  ensureIndex
+  ensureIndex,
+  getAllUsers,
+  getUsersByRole,
+  createUserAccount,
+  updateUserAccount,
+  deleteUserAccount,
+  updateUserRole,
+  updateUserVip,
+  getAdminStats,
+  getAllTransactions,
+  updateTransactionStatus,
+  deleteTransaction
 };
+
+
