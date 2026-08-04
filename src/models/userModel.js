@@ -229,14 +229,32 @@ const createUsersTable = async () => {
     if (adminUsers.length === 0) {
         const defaultAdminPassHash = hashPassword('admin123');
         await pool.query(
-            `INSERT INTO users (full_name, email, role, password_hash, is_vip, ai_quota) VALUES (?, ?, 'admin', ?, 1, 99999)`,
-            ['admin', 'admin@tuvi.com', defaultAdminPassHash]
+            `INSERT INTO users (full_name, email, role, password_hash, is_vip, vip_expires_at, package_code, package_name, ai_quota) VALUES (?, ?, 'admin', ?, 1, NULL, ?, ?, 99999)`,
+            ['admin', 'admin@tuvi.com', defaultAdminPassHash, 'VIP_LIFETIME', 'Gói VIP Vĩnh Viễn']
         );
         console.log('[DB] Seeded initial Admin user in Database: admin / admin@tuvi.com (Password: admin123)');
     } else if (!adminUsers[0].password_hash) {
         const defaultAdminPassHash = hashPassword('admin123');
         await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [defaultAdminPassHash, adminUsers[0].id]);
         console.log('[DB] Updated Admin password_hash in Database to default: admin123');
+    }
+
+    const [lifetimeAdminRows] = await pool.query("SELECT id, package_code, package_name, is_vip, vip_expires_at, ai_quota FROM users WHERE email = 'admin@tuvi.com' LIMIT 1");
+    if (lifetimeAdminRows.length > 0) {
+        const lifetimeAdmin = lifetimeAdminRows[0];
+        const needsLifetimeVip = lifetimeAdmin.package_code !== 'VIP_LIFETIME'
+            || lifetimeAdmin.package_name !== 'Gói VIP Vĩnh Viễn'
+            || Number(lifetimeAdmin.is_vip) !== 1
+            || lifetimeAdmin.vip_expires_at !== null
+            || Number(lifetimeAdmin.ai_quota) !== 99999;
+
+        if (needsLifetimeVip) {
+            await pool.query(
+                `UPDATE users SET is_vip = 1, vip_expires_at = NULL, package_code = ?, package_name = ?, ai_quota = 99999 WHERE id = ?`,
+                ['VIP_LIFETIME', 'Gói VIP Vĩnh Viễn', lifetimeAdmin.id]
+            );
+            console.log('[DB] Ensured admin@tuvi.com has lifetime VIP package');
+        }
     }
 
 
@@ -617,6 +635,49 @@ const getAdminStats = async () => {
     };
 };
 
+const getVipPackageUsageStats = async () => {
+    const [rows] = await pool.query(`
+        SELECT id, full_name, email, package_code, package_name, vip_expires_at, ai_quota, created_at
+        FROM users
+        WHERE is_vip = 1
+        ORDER BY COALESCE(package_name, package_code, full_name) ASC, full_name ASC, id DESC
+    `);
+
+    const users = rows.map((row) => ({
+        id: row.id,
+        full_name: row.full_name,
+        email: row.email,
+        package_code: row.package_code || null,
+        package_name: row.package_name || null,
+        vip_expires_at: row.vip_expires_at ? formatDateToYMD(row.vip_expires_at) : null,
+        ai_quota: row.ai_quota !== null ? Number(row.ai_quota) : 5,
+        created_at: row.created_at,
+    }));
+
+    const grouped = users.reduce((accumulator, user) => {
+        const label = user.package_name || user.package_code || 'Gói chưa xác định';
+        if (!accumulator[label]) {
+            accumulator[label] = {
+                package_label: label,
+                package_code: user.package_code || null,
+                package_name: user.package_name || null,
+                user_count: 0,
+                users: [],
+            };
+        }
+
+        accumulator[label].user_count += 1;
+        accumulator[label].users.push(user);
+        return accumulator;
+    }, {});
+
+    return {
+        totalVipUsers: users.length,
+        packageSummary: Object.values(grouped).sort((left, right) => right.user_count - left.user_count || left.package_label.localeCompare(right.package_label)),
+        users,
+    };
+};
+
 const createDuplicateEmailError = (email) => {
     const error = new Error(`Email already exists: ${email}`);
     error.code = 'DUPLICATE_EMAIL';
@@ -810,6 +871,7 @@ module.exports = {
     updateUserRole,
     updateUserVip,
     getAdminStats,
+    getVipPackageUsageStats,
     getAllTransactions,
     updateTransactionStatus,
     deleteTransaction,

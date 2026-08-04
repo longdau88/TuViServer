@@ -1,4 +1,4 @@
-const { getAllUsers, getUsersByRole, createUserAccount, updateUserAccount, deleteUserAccount, updateUserRole, updateUserVip, getAdminStats, getAllTransactions, updateTransactionStatus, deleteTransaction } = require('../models/userModel');
+const { getAllUsers, getUsersByRole, createUserAccount, updateUserAccount, deleteUserAccount, updateUserRole, updateUserVip, getAdminStats, getVipPackageUsageStats, getAllTransactions, updateTransactionStatus, deleteTransaction } = require('../models/userModel');
 
 
 const aiKnowledgeService = require('../services/aiKnowledgeService');
@@ -82,6 +82,7 @@ exports.login = async (req, res) => {
 exports.getStats = async (req, res) => {
     try {
         const stats = await getAdminStats();
+        const vipPackageUsage = await getVipPackageUsageStats();
         const knowledgeList = aiKnowledgeService.getAllKnowledge();
 
         return res.json({
@@ -90,6 +91,7 @@ exports.getStats = async (req, res) => {
             message: 'OK',
             data: {
                 ...stats,
+                vipPackageUsage,
                 totalKnowledge: knowledgeList.length,
             }
         });
