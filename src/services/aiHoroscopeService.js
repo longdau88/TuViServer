@@ -1,6 +1,6 @@
 const solarlunar = require('solarlunar').default || require('solarlunar');
 const { buildAstroProfile, toVietnameseCanChi } = require('./astroService');
-const { calculateTransitStars } = require('./realtimeHoroscopeService');
+const { calculateTransitStars, generateRealtimeForecast } = require('./realtimeHoroscopeService');
 const { getNapAmByCanChi } = require('./displayService');
 const auspiciousService = require('./auspiciousService');
 const aiKnowledgeService = require('./aiKnowledgeService');
@@ -34,6 +34,78 @@ const PRESET_PROMPTS = [
 ];
 
 const WEEKDAY_NAMES = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+const LUNAR_MONTH_BRANCHES = ['Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi', 'Tý', 'Sửu'];
+const LUNAR_MONTH_ELEMENT_MAP = {
+    Dần: 'Mộc',
+    Mão: 'Mộc',
+    Thìn: 'Thổ',
+    Tỵ: 'Hỏa',
+    Tị: 'Hỏa',
+    Ngọ: 'Hỏa',
+    Mùi: 'Thổ',
+    Thân: 'Kim',
+    Dậu: 'Kim',
+    Tuất: 'Thổ',
+    Hợi: 'Thủy',
+    Tý: 'Thủy',
+    Sửu: 'Thổ',
+};
+const ELEMENT_GENERATES = {
+    Mộc: 'Hỏa',
+    Hỏa: 'Thổ',
+    Thổ: 'Kim',
+    Kim: 'Thủy',
+    Thủy: 'Mộc',
+};
+
+const formatSolarDate = (solarDate) => {
+    if (!solarDate || !solarDate.cYear || !solarDate.cMonth || !solarDate.cDay) return null;
+    return `${solarDate.cYear}-${String(solarDate.cMonth).padStart(2, '0')}-${String(solarDate.cDay).padStart(2, '0')}`;
+};
+
+const getBestWealthMonthForecast = (personInput, lunarYear, personContext) => {
+    const results = [];
+    const userElement = personContext?.element || 'Thổ';
+
+    for (let lunarMonth = 1; lunarMonth <= 12; lunarMonth += 1) {
+        const solarDate = solarlunar.lunar2solar(lunarYear, lunarMonth, 15, false);
+        const targetDateStr = formatSolarDate(solarDate);
+        if (!targetDateStr) continue;
+
+        const forecast = generateRealtimeForecast(personInput, targetDateStr);
+        const taiLocScore = forecast?.daily_forecast?.scores_breakdown?.tai_loc ?? 0;
+        const monthBranch = LUNAR_MONTH_BRANCHES[lunarMonth - 1];
+        const monthElement = LUNAR_MONTH_ELEMENT_MAP[monthBranch] || 'Thổ';
+        const monthlyBonus = (() => {
+            if (monthElement === userElement) return 10;
+            if (ELEMENT_GENERATES[monthElement] === userElement) return 16;
+            if (ELEMENT_GENERATES[userElement] === monthElement) return 4;
+            return 0;
+        })();
+        const annualBonus = [personContext?.luu_loc_ton, personContext?.luu_thien_ma].includes(monthBranch) ? 6 : 0;
+
+        results.push({
+            lunar_month: lunarMonth,
+            month_branch: monthBranch,
+            month_element: monthElement,
+            month_can_chi: forecast?.can_chi_month || monthBranch,
+            target_date: targetDateStr,
+            tai_loc_score: taiLocScore,
+            total_score: taiLocScore + monthlyBonus + annualBonus,
+            monthly_bonus: monthlyBonus,
+            annual_bonus: annualBonus,
+            monthly_title: forecast?.monthly_forecast?.title || `Tử Vi Tháng ${lunarMonth} Âm Lịch`,
+            monthly_summary: forecast?.monthly_forecast?.summary || '',
+        });
+    }
+
+    results.sort((a, b) => (b.total_score - a.total_score) || (b.tai_loc_score - a.tai_loc_score) || (a.lunar_month - b.lunar_month));
+
+    return {
+        best: results[0] || null,
+        top3: results.slice(0, 3),
+    };
+};
 
 /**
  * Generate AI Horoscope Response (Context-Aware & RAG Knowledge Engine)
@@ -121,8 +193,69 @@ ${evalResult.reasons.map((r) => `   - ${r}`).join('\n')}
             'Vận trình tài lộc và công danh năm nay của tôi thế nào?',
         ];
     }
-    // --- A. INTENT: LỊCH ÂM DƯƠNG / NGÀY ÂM HÔM NAY / NGÀY MAI ---
-    else if (msgLower.includes('âm') || msgLower.includes('lịch âm') || msgLower.includes('ngày bao nhiêu') || msgLower.includes('ngày mấy') || msgLower.includes('hôm nay') || msgLower.includes('ngày mai')) {
+    // --- A. INTENT: TÀI LỘC & ĐẦU TƯ ---
+    else if (msgLower.includes('tài lộc') || msgLower.includes('tiền') || msgLower.includes('đầu tư') || msgLower.includes('kinh doanh') || msgLower.includes('tài chính') || msgLower.includes('bán') || msgLower.includes('mua')) {
+        const asksBestMonth = /tháng\s*(mấy|nào)/.test(msgLower) || msgLower.includes('bao giờ') || msgLower.includes('lúc nào');
+
+        if (asksBestMonth) {
+            const wealthForecast = getBestWealthMonthForecast(personInput, lunarToday.lYear || year, personContext);
+            const bestMonth = wealthForecast.best;
+
+            if (bestMonth) {
+                replyContent = `Chào **${personContext.full_name}** (Tuổi **${personContext.can_chi}** - Mệnh **${personContext.nap_am}** - Cung **${personContext.cung_phi}**).
+
+Dựa trên chấm điểm vận tài lộc theo từng tháng âm lịch trong năm **${lunarToday.lYear || year}**, tháng thuận lợi nhất của bạn là:
+
+1. **Tháng Âm Lịch Vượng Tài Nhất**: **Tháng ${bestMonth.lunar_month}**
+    - **Can Chi Tháng**: **${bestMonth.month_can_chi}**
+    - **Ngũ Hành Tháng**: **${bestMonth.month_element}**
+    - **Điểm tài lộc ước tính**: **${bestMonth.tai_loc_score}/100**
+    - **Điểm ưu tiên sau hiệu chỉnh**: **${bestMonth.total_score}/100**
+   - **Mốc tham chiếu**: ${bestMonth.target_date}
+   - **Nhận xét**: Đây là tháng có nền khí tài chính thuận hơn các tháng còn lại, phù hợp để chốt việc tiền bạc, đàm phán, hoặc mở rộng nguồn thu.
+
+2. **Các tháng đứng sau**:
+${wealthForecast.top3.slice(1).map((item) => `   - Tháng ${item.lunar_month} (${item.month_branch} - ${item.month_element}): ${item.total_score}/100`).join('\n')}
+
+3. **Lưu ý thực tế**:
+   - Tháng này tốt hơn về xu hướng, nhưng vẫn nên chọn đúng ngày hoàng đạo và tránh quyết định quá rủi ro.
+   - Nếu bạn muốn, tôi có thể chấm tiếp **ngày tốt nhất trong tháng ${bestMonth.lunar_month}** cho việc tiền bạc.`;
+
+                suggestedQuestions = [
+                    `Xem ngày tốt nhất trong tháng ${bestMonth.lunar_month} cho việc tiền bạc?`,
+                    'Hợp tác làm ăn với tuổi nào mang lại may mắn cho tôi?',
+                    'Cách chọn hướng bàn làm việc tụ tài lộc theo Cung Mệnh?',
+                ];
+
+                return {
+                    reply: replyContent,
+                    suggested_questions: suggestedQuestions,
+                    person_context: personContext,
+                    timestamp: new Date().toISOString(),
+                };
+            }
+        }
+
+        replyContent = `Chào **${personContext.full_name}** (Tuổi **${personContext.can_chi}** - Mệnh **${personContext.nap_am}** - Cung **${personContext.cung_phi}**).
+
+Dựa trên lá số Tử Vi và vận hạn năm **${personContext.luu_nien}**:
+
+1. **Về Tài Chính & Dòng Tiền**:
+   - Mệnh của bạn là **${personContext.nap_am}** (${personContext.element}). Năm nay Lưu Lộc Tồn giáng tại cung **${personContext.luu_loc_ton}**. Đây là dấu hiệu vượng khí tài lộc có sự khởi sắc.
+   - Thích hợp quản lý dòng tiền bài bản, tích lũy kiến thức trước khi mở rộng quy mô đầu tư.
+
+2. **Lời Khuyên Phong Thủy Tài Lộc**:
+   - Sử dụng trang phục hoặc vật phẩm thuộc hành **${personContext.element === 'Kim' ? 'Thổ / Kim (Vàng, Nâu, Trắng)' : (personContext.element === 'Mộc' ? 'Thủy / Mộc (Xanh Lá, Xanh Dương)' : 'Hỏa / Thổ (Đỏ, Hồng, Vàng)')}** để gia tăng vận khí tích lộc.
+   - Tránh đầu tư mạo hiểm vào các tháng có sao kỵ chiếu.`;
+
+        suggestedQuestions = [
+            'Tháng mấy Âm lịch năm nay tôi có lộc tiền bạc lớn nhất?',
+            'Hợp tác làm ăn với tuổi nào mang lại may mắn cho tôi?',
+            'Cách chọn hướng bàn làm việc tụ tài lộc theo Cung Mệnh?',
+        ];
+    }
+    // --- B. INTENT: LỊCH ÂM DƯƠNG / NGÀY ÂM HÔM NAY / NGÀY MAI ---
+    else if ((msgLower.includes('âm') || msgLower.includes('lịch âm') || msgLower.includes('ngày bao nhiêu') || msgLower.includes('ngày mấy') || msgLower.includes('hôm nay') || msgLower.includes('ngày mai')) && !msgLower.includes('tiền') && !msgLower.includes('tài lộc') && !msgLower.includes('tài chính') && !msgLower.includes('đầu tư') && !msgLower.includes('kinh doanh')) {
         let targetLunar = lunarToday;
         let dayTitle = 'Hôm nay';
         let solDateStr = `${day}/${month}/${year}`;
@@ -155,26 +288,6 @@ ${evalResult.reasons.map((r) => `   - ${r}`).join('\n')}
             'Hôm nay có phải là ngày tốt cho tuổi của tôi không?',
             'Giờ Hoàng Đạo tốt nhất trong ngày hôm nay là mấy giờ?',
             'Xem ngày tốt trong tháng này cho công việc của tôi?',
-        ];
-    }
-    // --- B. INTENT: TÀI LỘC & ĐẦU TƯ ---
-    else if (msgLower.includes('tài lộc') || msgLower.includes('tiền') || msgLower.includes('đầu tư') || msgLower.includes('kinh doanh') || msgLower.includes('tài chính') || msgLower.includes('bán') || msgLower.includes('mua')) {
-        replyContent = `Chào **${personContext.full_name}** (Tuổi **${personContext.can_chi}** - Mệnh **${personContext.nap_am}** - Cung **${personContext.cung_phi}**).
-
-Dựa trên lá số Tử Vi và vận hạn năm **${personContext.luu_nien}**:
-
-1. **Về Tài Chính & Dòng Tiền**:
-   - Mệnh của bạn là **${personContext.nap_am}** (${personContext.element}). Năm nay Lưu Lộc Tồn giáng tại cung **${personContext.luu_loc_ton}**. Đây là dấu hiệu vượng khí tài lộc có sự khởi sắc.
-   - Thích hợp quản lý dòng tiền bài bản, tích lũy kiến thức trước khi mở rộng quy mô đầu tư.
-
-2. **Lời Khuyên Phong Thủy Tài Lộc**:
-   - Sử dụng trang phục hoặc vật phẩm thuộc hành **${personContext.element === 'Kim' ? 'Thổ / Kim (Vàng, Nâu, Trắng)' : (personContext.element === 'Mộc' ? 'Thủy / Mộc (Xanh Lá, Xanh Dương)' : 'Hỏa / Thổ (Đỏ, Hồng, Vàng)')}** để gia tăng vận khí tích lộc.
-   - Tránh đầu tư mạo hiểm vào các tháng có sao kỵ chiếu.`;
-
-        suggestedQuestions = [
-            'Tháng mấy Âm lịch năm nay tôi có lộc tiền bạc lớn nhất?',
-            'Hợp tác làm ăn với tuổi nào mang lại may mắn cho tôi?',
-            'Cách chọn hướng bàn làm việc tụ tài lộc theo Cung Mệnh?',
         ];
     }
     // --- C. INTENT: CÔNG DANH & SỰ NGHIỆP ---
