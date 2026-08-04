@@ -1,8 +1,11 @@
+const pool = require('../config/db');
 const cacheService = require('../services/cacheService');
 const userCache = require('../services/userCache');
-const { findUserByDeviceId, findUserById } = require('../models/userModel');
+const { findUserByDeviceId, findUserById, findUserByEmail } = require('../models/userModel');
 const { createUser, updateUser } = require('../services/userService');
 const { buildClientDisplayData } = require('../services/displayService');
+const { verifyPassword } = require('../utils/hashUtils');
+const jwt = require('jsonwebtoken');
 
 exports.checkDeviceId = async (req, res) => {
     const deviceId = req.query.device_id;
@@ -24,7 +27,9 @@ exports.checkDeviceId = async (req, res) => {
             console.warn(`checkDeviceId slow query: ${durationMs}ms`, { device_id: deviceId });
         }
 
-        res.set('Cache-Control', 'private, max-age=60');
+        // No browser cache - always get fresh data so deleted users see create screen immediately
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.set('Pragma', 'no-cache');
         return res.json({
             status: 200,
             error: 0,
@@ -62,6 +67,7 @@ exports.createUser = async (req, res) => {
         const newUser = await createUser({
             full_name,
             email,
+            password: req.body.password,
             birthday,
             birth_time,
             gender,
@@ -307,8 +313,6 @@ exports.clearAllCache = async (req, res) => {
     }
 };
 
-const pool = require('../config/db');
-
 exports.getPublicPackagesController = async (req, res) => {
     try {
         let rows = [];
@@ -370,4 +374,61 @@ exports.getPublicPackagesController = async (req, res) => {
         return res.status(500).json({ status: 500, error: 1, message: 'Lỗi lấy danh sách gói cước' });
     }
 };
+
+exports.loginUserController = async (req, res) => {
+    try {
+        const { email, password, device_id } = req.body || {};
+        const deviceId = device_id || req.headers['x-device-id'] || req.query.device_id;
+
+        if (!email || !password) {
+            return res.status(400).json({ status: 400, error: 1, message: 'Vui lòng nhập Email và Mật khẩu' });
+        }
+
+        const normalizedEmail = String(email).trim();
+        const user = await findUserByEmail(normalizedEmail);
+
+        if (!user || !user.password_hash) {
+            return res.status(401).json({ status: 401, error: 1, message: 'Email hoặc Mật khẩu không chính xác!' });
+        }
+
+        const isValid = verifyPassword(password, user.password_hash);
+        if (!isValid) {
+            return res.status(401).json({ status: 401, error: 1, message: 'Email hoặc Mật khẩu không chính xác!' });
+        }
+
+        // UPDATE device_id of the logged in user to the current device's device_id!
+        if (deviceId) {
+            await pool.query(`UPDATE users SET device_id = ? WHERE id = ?`, [deviceId, user.id]);
+            await userCache.invalidateUser(user.id, deviceId);
+        }
+
+        const tokenSecret = process.env.JWT_SECRET || 'secret';
+        const token = jwt.sign(
+            { id: user.id, sub: user.email, name: user.full_name, role: user.role || 'user' },
+            tokenSecret,
+            { expiresIn: '30d', algorithm: 'HS256' }
+        );
+
+        const updatedUserProfile = await findUserById(user.id);
+        // Strip password_hash before sending to client
+        if (updatedUserProfile && updatedUserProfile.password_hash) {
+            delete updatedUserProfile.password_hash;
+        }
+
+        return res.json({
+            status: 200,
+            error: 0,
+            message: 'Đăng nhập thành công!',
+            data: {
+                token,
+                access_token: token,
+                user: updatedUserProfile
+            }
+        });
+    } catch (err) {
+        console.error('loginUserController error:', err);
+        return res.status(500).json({ status: 500, error: 1, message: 'Lỗi máy chủ khi đăng nhập' });
+    }
+};
+
 

@@ -4,12 +4,15 @@ const userCache = require('./userCache');
 const { findUserByDeviceIdFromDb, findUserByIdFromDb, findUserByEmail, generateUserCode, upsertAstroProfile, isDuplicateEmailError, createDuplicateEmailError, createInvalidBirthDataError } = require('../models/userModel');
 const { buildAstroProfile } = require('./astroService');
 const { normalizeBirthday, normalizeBirthTimeForDb } = require('../utils/dateUtils');
+const { hashPassword } = require('../utils/hashUtils');
 
 const createUser = async (userData) => {
     const {
-        full_name, email, birthday, birth_time, gender, device_id, device_info,
+        full_name, email, password, birthday, birth_time, gender, device_id, device_info,
         avatar_base64, avatar_url, firebase_token,
     } = userData;
+
+    const hashedPassword = hashPassword(password || '123456');
     const normalizedEmail = String(email).trim();
     const normalizedBirthdayTime = normalizeBirthTimeForDb(birth_time);
     const normalizedBirthday = normalizeBirthday(birthday);
@@ -42,6 +45,7 @@ const createUser = async (userData) => {
             UPDATE users
             SET full_name = ?,
                 email = ?,
+                password_hash = ?,
                 birthday = ?,
                 birth_time = ?,
                 gender = ?,
@@ -53,6 +57,7 @@ const createUser = async (userData) => {
         const values = [
             full_name,
             normalizedEmail,
+            hashedPassword,
             normalizedBirthday,
             normalizedBirthdayTime,
             gender,
@@ -97,12 +102,13 @@ const createUser = async (userData) => {
     }
 
     const sql = `
-        INSERT INTO users (full_name, email, birthday, birth_time, gender, device_id, device_info, avatar_url, firebase_token, user_code)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO users (full_name, email, password_hash, birthday, birth_time, gender, device_id, device_info, avatar_url, firebase_token, user_code)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
         full_name,
         normalizedEmail,
+        hashedPassword,
         normalizedBirthday,
         normalizedBirthdayTime,
         gender,
@@ -166,11 +172,19 @@ const updateUser = async (userData) => {
     }
 
     const normalizedEmail = String(email).trim();
+    const existingEmailUser = await findUserByEmail(normalizedEmail);
+    if (existingEmailUser && existingEmailUser.id !== userId) {
+        throw createDuplicateEmailError(normalizedEmail);
+    }
+
+    const normalizedBirthdayTime = normalizeBirthTimeForDb(birth_time);
     const normalizedBirthday = normalizeBirthday(birthday);
-    const normalizedBirthTime = normalizeBirthTimeForDb(birth_time);
-    if (!normalizedBirthday || !normalizedBirthTime) {
+    if (!normalizedBirthday || !normalizedBirthdayTime) {
         throw createInvalidBirthDataError('Invalid birthday or birth_time');
     }
+    const astroProfile = buildAstroProfile(full_name, normalizedBirthday, normalizedBirthdayTime, gender);
+    const canChiString = astroProfile.can_chi;
+    const cung_phi = astroProfile.cung_phi;
 
     const resolvedAvatarUrl = await avatarService.resolveAvatarUrl({
         avatar_base64,
@@ -179,15 +193,6 @@ const updateUser = async (userData) => {
         isUpdate: true,
         userId,
     });
-
-    const astroProfile = buildAstroProfile(full_name, normalizedBirthday, normalizedBirthTime, gender);
-    const canChiString = astroProfile.can_chi;
-    const cung_phi = astroProfile.cung_phi;
-
-    const existingEmailUser = await findUserByEmail(normalizedEmail);
-    if (existingEmailUser && existingEmailUser.id !== userId) {
-        throw createDuplicateEmailError(normalizedEmail);
-    }
 
     const sql = `
         UPDATE users
@@ -205,7 +210,7 @@ const updateUser = async (userData) => {
         full_name,
         normalizedEmail,
         normalizedBirthday,
-        normalizedBirthTime,
+        normalizedBirthdayTime,
         gender,
         device_info,
         resolvedAvatarUrl === undefined ? null : resolvedAvatarUrl,
@@ -243,8 +248,7 @@ const updateUser = async (userData) => {
     return await findUserByIdFromDb(userId);
 };
 
-
 module.exports = {
   createUser,
-  updateUser
+  updateUser,
 };

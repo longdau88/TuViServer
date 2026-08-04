@@ -24,7 +24,8 @@
             </a>
             <!-- Top Right User Avatar & VIP Upgrade Button -->
             <div class="d-flex align-items-center">
-                <a href="/goi-cuoc.html" class="btn btn-sm btn-outline-warning rounded-pill me-3 px-3 fw-semibold shadow-sm">
+                <a href="/goi-cuoc.html"
+                    class="btn btn-sm btn-outline-warning rounded-pill me-3 px-3 fw-semibold shadow-sm">
                     <i class="bi bi-crown me-1"></i> Mua VIP
                 </a>
                 <div id="nav-user-profile" class="nav-user-profile d-none" title="Cập nhật thông tin cá nhân">
@@ -43,10 +44,10 @@
     </nav>
 
     <main class="container my-4">
-        
+
         <!-- Initial Loading Screen -->
         <section id="initial-loading-screen" class="text-center">
-             <div class="card form-card shadow">
+            <div class="card form-card shadow">
                 <div class="card-body p-4 p-md-5">
                     <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -66,31 +67,38 @@
                     Chọn một chức năng để tiếp tục.
                 </p>
                 <!-- User VIP Status & Upgrade Bar -->
-                <div class="d-flex justify-content-center align-items-center gap-3 mt-2 flex-wrap" id="user-vip-status-bar">
-                    <div class="px-3 py-2 rounded-pill border shadow-sm d-flex align-items-center gap-2" style="background: rgba(28, 22, 66, 0.75); border-color: rgba(253, 216, 53, 0.4) !important;">
+                <div class="d-flex justify-content-center align-items-center gap-3 mt-2 flex-wrap"
+                    id="user-vip-status-bar">
+                    <div class="px-3 py-2 rounded-pill border shadow-sm d-flex align-items-center gap-2"
+                        style="background: rgba(28, 22, 66, 0.75); border-color: rgba(253, 216, 53, 0.4) !important;">
                         <i class="bi bi-crown-fill text-warning fs-5"></i>
                         <span class="small text-muted text-uppercase me-1">Gói Cước Hiện Tại:</span>
                         <strong class="text-warning" id="user-pkg-name">Miễn Phí (Free)</strong>
+                        <span class="small text-light-emphasis ms-1" id="user-pkg-expiry"></span>
                         <span class="badge bg-secondary text-white ms-1" id="user-pkg-badge">Free</span>
                     </div>
-                    <a href="/goi-cuoc.html" class="btn btn-warning rounded-pill shadow-sm fw-bold px-4 py-2 text-decoration-none text-dark">
+                    <a href="/goi-cuoc.html"
+                        class="btn btn-warning rounded-pill shadow-sm fw-bold px-4 py-2 text-decoration-none text-dark">
                         <i class="bi bi-stars me-1"></i> Mua Gói VIP
                     </a>
                 </div>
             </div>
 
-             <div class="row justify-content-center g-4 mt-4">
+            <div class="row justify-content-center g-4 mt-4">
                 <div class="col-md-6 col-lg-4">
-                    <a href="/tro-ly-ai.html" class="card dashboard-card h-100 text-decoration-none d-block" id="navi-ai-chat">
+                    <a href="/tro-ly-ai.html" class="card dashboard-card h-100 text-decoration-none d-block"
+                        id="navi-ai-chat">
                         <div class="card-body text-center py-4">
                             <i class="bi bi-robot display-4 text-info"></i>
                             <h4 class="card-title mt-3">Trợ Lý AI Tử Vi 24/7</h4>
-                            <p class="card-text">Hỏi - đáp thông minh mọi thắc mắc Vận Hạn & Tử Vi theo Lá số cá nhân.</p>
+                            <p class="card-text">Hỏi - đáp thông minh mọi thắc mắc Vận Hạn & Tử Vi theo Lá số cá nhân.
+                            </p>
                         </div>
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-4">
-                    <a href="/chart.html" class="card dashboard-card h-100 text-decoration-none d-block" id="navi-view-chart">
+                    <a href="/chart.html" class="card dashboard-card h-100 text-decoration-none d-block"
+                        id="navi-view-chart">
                         <div class="card-body text-center py-4">
                             <i class="bi bi-star-fill display-4 text-primary"></i>
                             <h4 class="card-title mt-3">Xem Lá Số Tử Vi</h4>
@@ -99,47 +107,56 @@
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-4">
-                    <a href="/van-han-realtime.html" class="card dashboard-card h-100 text-decoration-none d-block" id="navi-realtime">
+                    <a href="/van-han-realtime.html" class="card dashboard-card h-100 text-decoration-none d-block"
+                        id="navi-realtime">
                         <div class="card-body text-center py-4">
                             <i class="bi bi-speedometer2 display-4 text-warning"></i>
                             <h4 class="card-title mt-3">Vận Hạn</h4>
-                            <p class="card-text">Xem Tử Vi Hôm Nay / Tháng Này cho bản thân hoặc người khác theo Sao Lưu Niên.</p>
+                            <p class="card-text">Xem Tử Vi Hôm Nay / Tháng Này cho bản thân hoặc người khác theo Sao Lưu
+                                Niên.</p>
                         </div>
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-4">
-                    <a href="/tu-vi-doi.html" class="card dashboard-card h-100 text-decoration-none d-block" id="navi-compatibility">
+                    <a href="/tu-vi-doi.html" class="card dashboard-card h-100 text-decoration-none d-block"
+                        id="navi-compatibility">
                         <div class="card-body text-center py-4">
                             <i class="bi bi-heart-fill display-4 text-danger"></i>
                             <h4 class="card-title mt-3">Xem Hợp Tuổi / Tử Vi Đôi</h4>
-                            <p class="card-text">Phân tích xung hợp Ngũ Hành, Can Chi, Bát Trạch toàn diện giữa 2 người.</p>
+                            <p class="card-text">Phân tích xung hợp Ngũ Hành, Can Chi, Bát Trạch toàn diện giữa 2 người.
+                            </p>
                         </div>
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-4">
-                    <a href="/chon-ngay-tot.html" class="card dashboard-card h-100 text-decoration-none d-block" id="navi-auspicious">
+                    <a href="/chon-ngay-tot.html" class="card dashboard-card h-100 text-decoration-none d-block"
+                        id="navi-auspicious">
                         <div class="card-body text-center py-4">
                             <i class="bi bi-calendar-check-fill display-4 text-success"></i>
                             <h4 class="card-title mt-3">Chọn Ngày Tốt Cá Nhân Hóa</h4>
-                            <p class="card-text">Tìm ngày lành tháng tốt (Cưới hỏi, Khai trương, Động thổ, Mua xe...) hợp Tuổi & Mệnh.</p>
+                            <p class="card-text">Tìm ngày lành tháng tốt (Cưới hỏi, Khai trương, Động thổ, Mua xe...)
+                                hợp Tuổi & Mệnh.</p>
                         </div>
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-4">
-                     <a href="/lich-van-nien.html" class="card dashboard-card h-100 text-decoration-none d-block" id="navi-calendar">
+                    <a href="/lich-van-nien.html" class="card dashboard-card h-100 text-decoration-none d-block"
+                        id="navi-calendar">
                         <div class="card-body text-center py-4">
-                             <i class="bi bi-calendar-event-fill display-4 text-secondary"></i>
-                             <h4 class="card-title mt-3">Lịch Vạn Niên</h4>
-                             <p class="card-text">Xem lịch Âm Dương, đổi ngày và tra cứu chi tiết.</p>
+                            <i class="bi bi-calendar-event-fill display-4 text-secondary"></i>
+                            <h4 class="card-title mt-3">Lịch Vạn Niên</h4>
+                            <p class="card-text">Xem lịch Âm Dương, đổi ngày và tra cứu chi tiết.</p>
                         </div>
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-4">
-                     <a href="/boc-que-hang-ngay.html" class="card dashboard-card h-100 text-decoration-none d-block" id="navi-divination">
+                    <a href="/boc-que-hang-ngay.html" class="card dashboard-card h-100 text-decoration-none d-block"
+                        id="navi-divination">
                         <div class="card-body text-center py-4">
-                             <i class="bi bi-magic display-4 text-warning"></i>
-                             <h4 class="card-title mt-3">Bốc Quẻ & Năng Lượng Ngày</h4>
-                             <p class="card-text">Gieo quẻ Kinh Dịch hằng ngày, xem Chỉ số Năng lượng Cát Tường & Giờ Hoàng Đạo cá nhân hóa.</p>
+                            <i class="bi bi-magic display-4 text-warning"></i>
+                            <h4 class="card-title mt-3">Bốc Quẻ & Năng Lượng Ngày</h4>
+                            <p class="card-text">Gieo quẻ Kinh Dịch hằng ngày, xem Chỉ số Năng lượng Cát Tường & Giờ
+                                Hoàng Đạo cá nhân hóa.</p>
                         </div>
                     </a>
                 </div>
@@ -150,7 +167,7 @@
 
         <!-- Chart Loading Screen -->
         <section id="chart-loading-screen" class="d-none text-center">
-             <div class="card form-card shadow">
+            <div class="card form-card shadow">
                 <div class="card-body p-4 p-md-5">
                     <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -164,10 +181,10 @@
         <!-- Results Screen -->
         <section id="results-screen" class="d-none">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-                 <h2 class="mb-2 mb-md-0">Lá Số Tử Vi</h2>
-                 <button id="results-back-button" class="btn btn-outline-secondary">
+                <h2 class="mb-2 mb-md-0">Lá Số Tử Vi</h2>
+                <button id="results-back-button" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i> Về Bảng điều khiển
-                 </button>
+                </button>
             </div>
             <div id="results-content">
                 <!-- User profile and chart details will be injected here by app.js -->

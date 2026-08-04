@@ -2,12 +2,24 @@ const { getAllUsers, getUsersByRole, createUserAccount, updateUserAccount, delet
 
 
 const aiKnowledgeService = require('../services/aiKnowledgeService');
+const cacheService = require('../services/cacheService');
 const pool = require('../config/db');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const { verifyPassword } = require('../utils/hashUtils');
 
 dotenv.config();
+
+exports.clearAllCache = async (req, res) => {
+    try {
+        await cacheService.clearAll();
+        return res.json({ status: 200, error: 0, message: 'Đã xóa sạch toàn bộ Cache hệ thống (Redis) thành công!' });
+    } catch (err) {
+        console.error('admin clearAllCache error:', err);
+        return res.status(500).json({ status: 500, error: 1, message: 'Lỗi khi xóa cache hệ thống' });
+    }
+};
+
 
 
 /**
@@ -71,7 +83,7 @@ exports.getStats = async (req, res) => {
     try {
         const stats = await getAdminStats();
         const knowledgeList = aiKnowledgeService.getAllKnowledge();
-        
+
         return res.json({
             status: 200,
             error: 0,
@@ -126,7 +138,7 @@ exports.createUser = async (req, res) => {
             return res.status(400).json({ status: 400, error: 1, message: 'Vui lòng nhập Họ tên và Email' });
         }
 
-        const newId = await createUserAccount({
+        await createUserAccount({
             full_name,
             email,
             password: password || '123456',
@@ -136,11 +148,14 @@ exports.createUser = async (req, res) => {
             ai_quota: ai_quota !== undefined ? Number(ai_quota) : 5
         });
 
+        // Auto clear system cache on mutation
+        await cacheService.clearAll();
+
         return res.json({
             status: 200,
             error: 0,
             message: `Tạo tài khoản ${role === 'admin' ? 'Admin' : 'Người dùng'} mới thành công!`,
-            data: { id: newId }
+            data: {}
         });
     } catch (err) {
         console.error('admin createUser error:', err);
@@ -156,6 +171,7 @@ exports.updateUser = async (req, res) => {
         const userId = req.params.id;
         const userData = req.body || {};
         await updateUserAccount(userId, userData);
+        await cacheService.clearAll();
         return res.json({ status: 200, error: 0, message: 'Cập nhật tài khoản thành công!' });
     } catch (err) {
         console.error('admin updateUser error:', err);
@@ -174,6 +190,7 @@ exports.deleteUser = async (req, res) => {
             return res.status(400).json({ status: 400, error: 1, message: 'Bạn không thể tự xóa tài khoản Admin đang đăng nhập!' });
         }
         await deleteUserAccount(userId);
+        await cacheService.clearAll();
         return res.json({ status: 200, error: 0, message: 'Đã xóa tài khoản thành công!' });
     } catch (err) {
         console.error('admin deleteUser error:', err);
@@ -192,6 +209,7 @@ exports.updateRole = async (req, res) => {
             return res.status(400).json({ status: 400, error: 1, message: 'Role không hợp lệ' });
         }
         await updateUserRole(userId, role);
+        await cacheService.clearAll();
         return res.json({ status: 200, error: 0, message: 'Cập nhật quyền thành công' });
     } catch (err) {
         console.error('admin updateRole error:', err);
@@ -205,8 +223,32 @@ exports.updateRole = async (req, res) => {
 exports.updateVip = async (req, res) => {
     try {
         const userId = req.params.id;
-        const { is_vip, days, quota } = req.body;
-        await updateUserVip(userId, is_vip, days || 30, quota || 100);
+        const { is_vip, days, quota, package_code } = req.body || {};
+
+        let resolvedDays = Number(days || 30);
+        let resolvedQuota = Number(quota || 100);
+        let resolvedPackageCode = package_code || null;
+        let resolvedPackageName = null;
+
+        if (resolvedPackageCode) {
+            const [packages] = await pool.query(
+                `SELECT code, name, duration_days, ai_quota FROM vip_packages WHERE code = ? LIMIT 1`,
+                [resolvedPackageCode]
+            );
+
+            if (packages.length === 0) {
+                return res.status(404).json({ status: 404, error: 1, message: 'Không tìm thấy gói cước đã chọn' });
+            }
+
+            resolvedPackageCode = packages[0].code;
+            resolvedPackageName = packages[0].name || null;
+            resolvedDays = Number(packages[0].duration_days || resolvedDays || 30);
+            resolvedQuota = Number(packages[0].ai_quota || resolvedQuota || 100);
+        }
+
+        const shouldActivateVip = Boolean(resolvedPackageCode) || Number(is_vip) === 1 || is_vip === true;
+        await updateUserVip(userId, shouldActivateVip, resolvedDays, resolvedQuota, resolvedPackageCode, resolvedPackageName);
+        await cacheService.clearAll();
         return res.json({ status: 200, error: 0, message: 'Cập nhật VIP & Quota thành công' });
     } catch (err) {
         console.error('admin updateVip error:', err);
@@ -236,6 +278,7 @@ exports.createPackage = async (req, res) => {
             `INSERT INTO vip_packages (code, name, price, duration_days, ai_quota, description) VALUES (?, ?, ?, ?, ?, ?)`,
             [code, name, price, duration_days || 30, ai_quota || 100, description || '']
         );
+        await cacheService.clearAll();
         return res.json({ status: 200, error: 0, message: 'Tạo gói cước mới thành công' });
     } catch (err) {
         console.error('admin createPackage error:', err);
@@ -247,6 +290,7 @@ exports.deletePackage = async (req, res) => {
     try {
         const id = req.params.id;
         await pool.query(`DELETE FROM vip_packages WHERE id = ?`, [id]);
+        await cacheService.clearAll();
         return res.json({ status: 200, error: 0, message: 'Xóa gói cước thành công' });
     } catch (err) {
         return res.status(500).json({ status: 500, error: 1, message: 'Lỗi xóa gói cước' });
@@ -263,6 +307,7 @@ exports.deleteKnowledge = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ status: 404, error: 1, message: 'Không tìm thấy tri thức cần xóa' });
         }
+        await cacheService.clearAll();
         return res.json({ status: 200, error: 0, message: 'Đã xóa tri thức AI thành công' });
     } catch (err) {
         return res.status(500).json({ status: 500, error: 1, message: 'Lỗi xóa tri thức AI' });
@@ -295,6 +340,7 @@ exports.updateTransactionStatusController = async (req, res) => {
             return res.status(400).json({ status: 400, error: 1, message: 'Trạng thái giao dịch không hợp lệ' });
         }
         await updateTransactionStatus(transId, status);
+        await cacheService.clearAll();
         return res.json({ status: 200, error: 0, message: `Cập nhật trạng thái giao dịch thành [${status}] thành công!` });
     } catch (err) {
         console.error('admin updateTransaction error:', err);
@@ -306,6 +352,7 @@ exports.deleteTransactionController = async (req, res) => {
     try {
         const transId = req.params.id;
         await deleteTransaction(transId);
+        await cacheService.clearAll();
         return res.json({ status: 200, error: 0, message: 'Đã xóa giao dịch thành công' });
     } catch (err) {
         console.error('admin deleteTransaction error:', err);

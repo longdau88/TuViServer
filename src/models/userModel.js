@@ -66,6 +66,8 @@ const formatUserRow = (row) => {
         role: row.role || 'user',
         is_vip: Boolean(row.is_vip),
         vip_expires_at: row.vip_expires_at ? formatDateToYMD(row.vip_expires_at) : null,
+        package_code: row.package_code || null,
+        package_name: row.package_name || null,
         ai_quota: row.ai_quota !== undefined && row.ai_quota !== null ? Number(row.ai_quota) : 5,
         created_at: row.created_at,
         updated_at: row.updated_at,
@@ -77,8 +79,10 @@ const formatUserRow = (row) => {
         dung_y: row.dung_y || null,
         ky_than: row.ky_than || null,
         astro_profile,
+        password_hash: row.password_hash || null,
     };
 };
+
 
 const upsertAstroProfile = async (userId, astroData) => {
     const {
@@ -181,6 +185,8 @@ const createUsersTable = async () => {
       role VARCHAR(50) DEFAULT 'user',
       is_vip TINYINT(1) DEFAULT 0,
       vip_expires_at DATETIME NULL,
+    package_code VARCHAR(100) NULL,
+    package_name VARCHAR(255) NULL,
       ai_quota INT DEFAULT 5,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -201,6 +207,8 @@ const createUsersTable = async () => {
         { name: 'role', type: "VARCHAR(50) DEFAULT 'user'" },
         { name: 'is_vip', type: "TINYINT(1) DEFAULT 0" },
         { name: 'vip_expires_at', type: "DATETIME NULL" },
+        { name: 'package_code', type: "VARCHAR(100) NULL" },
+        { name: 'package_name', type: "VARCHAR(255) NULL" },
         { name: 'ai_quota', type: "INT DEFAULT 5" },
         { name: 'avatar_url', type: "VARCHAR(512) NULL" },
         { name: 'birth_time', type: "TIME NULL" },
@@ -351,7 +359,7 @@ const findUserByDeviceIdFromDb = async (deviceId) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,
              u.device_id, u.device_info, u.avatar_url, u.firebase_token, u.user_code,
-             u.role, u.is_vip, u.vip_expires_at, u.ai_quota, u.created_at, u.updated_at,
+                         u.role, u.is_vip, u.vip_expires_at, u.package_code, u.package_name, u.ai_quota, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
         FROM users u
@@ -382,7 +390,7 @@ const findUserByIdFromDb = async (userId) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,
              u.device_id, u.device_info, u.avatar_url, u.firebase_token, u.user_code,
-             u.role, u.is_vip, u.vip_expires_at, u.ai_quota, u.created_at, u.updated_at,
+                         u.role, u.is_vip, u.vip_expires_at, u.package_code, u.package_name, u.ai_quota, u.created_at, u.updated_at,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
         FROM users u
@@ -413,10 +421,12 @@ const findUserByEmail = async (email) => {
     const sql = `
         SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.birth_time,  
              u.device_id, u.device_info, u.avatar_url, u.firebase_token, u.user_code,
-             u.role, u.is_vip, u.vip_expires_at, u.ai_quota, u.created_at, u.updated_at,
+                         u.role, u.is_vip, u.vip_expires_at, u.package_code, u.package_name, u.ai_quota, u.created_at, u.updated_at,
+             u.password_hash,
                p.can_chi, p.cung_phi, p.life_path, p.expression, p.soul, p.dung_y, p.ky_than,
                p.tu_tru, p.tu_vi, p.huong, p.mau_sac_vat_pham, p.bieu_do_ngay_sinh, p.ngu_hanh_ten, p.so_net
         FROM users u
+        LEFT JOIN user_astro_profiles p ON u.id = p.user_id
         WHERE u.email = ?
         LIMIT 1
     `;
@@ -424,10 +434,11 @@ const findUserByEmail = async (email) => {
     return rows.length > 0 ? formatUserRow(rows[0]) : null;
 };
 
+
 const getAllUsers = async (search = '', limit = 50, offset = 0) => {
 
     let sql = `
-        SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.role, u.is_vip, u.vip_expires_at, u.ai_quota, u.created_at
+        SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.role, u.is_vip, u.vip_expires_at, u.package_code, u.package_name, u.ai_quota, u.created_at
         FROM users u
     `;
     const params = [];
@@ -439,7 +450,7 @@ const getAllUsers = async (search = '', limit = 50, offset = 0) => {
     params.push(Number(limit), Number(offset));
 
     const [rows] = await pool.query(sql, params);
-    
+
     let countSql = `SELECT COUNT(*) as total FROM users`;
     const countParams = [];
     if (search) {
@@ -447,7 +458,7 @@ const getAllUsers = async (search = '', limit = 50, offset = 0) => {
         countParams.push(`%${search}%`, `%${search}%`);
     }
     const [countRows] = await pool.query(countSql, countParams);
-    
+
     return {
         users: rows.map(r => ({
             id: r.id,
@@ -458,6 +469,8 @@ const getAllUsers = async (search = '', limit = 50, offset = 0) => {
             role: r.role || 'user',
             is_vip: Boolean(r.is_vip),
             vip_expires_at: r.vip_expires_at ? formatDateToYMD(r.vip_expires_at) : null,
+            package_code: r.package_code || null,
+            package_name: r.package_name || null,
             ai_quota: r.ai_quota !== null ? r.ai_quota : 5,
             created_at: r.created_at
         })),
@@ -468,7 +481,7 @@ const getAllUsers = async (search = '', limit = 50, offset = 0) => {
 const getUsersByRole = async (targetRole = 'user', search = '', limit = 50, offset = 0) => {
 
     let sql = `
-        SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.role, u.is_vip, u.vip_expires_at, u.ai_quota, u.created_at
+        SELECT u.id, u.full_name, u.email, u.birthday, u.gender, u.role, u.is_vip, u.vip_expires_at, u.package_code, u.package_name, u.ai_quota, u.created_at
         FROM users u
         WHERE u.role = ?
     `;
@@ -481,7 +494,7 @@ const getUsersByRole = async (targetRole = 'user', search = '', limit = 50, offs
     params.push(Number(limit), Number(offset));
 
     const [rows] = await pool.query(sql, params);
-    
+
     let countSql = `SELECT COUNT(*) as total FROM users WHERE role = ?`;
     const countParams = [targetRole];
     if (search) {
@@ -489,7 +502,7 @@ const getUsersByRole = async (targetRole = 'user', search = '', limit = 50, offs
         countParams.push(`%${search}%`, `%${search}%`);
     }
     const [countRows] = await pool.query(countSql, countParams);
-    
+
     return {
         users: rows.map(r => ({
             id: r.id,
@@ -500,6 +513,8 @@ const getUsersByRole = async (targetRole = 'user', search = '', limit = 50, offs
             role: r.role || 'user',
             is_vip: Boolean(r.is_vip),
             vip_expires_at: r.vip_expires_at ? formatDateToYMD(r.vip_expires_at) : null,
+            package_code: r.package_code || null,
+            package_name: r.package_name || null,
             ai_quota: r.ai_quota !== null ? r.ai_quota : 5,
             created_at: r.created_at
         })),
@@ -510,7 +525,7 @@ const getUsersByRole = async (targetRole = 'user', search = '', limit = 50, offs
 const createUserAccount = async (userData) => {
     const { hashPassword } = require('../utils/hashUtils');
     const { full_name, email, password, role = 'user', gender = null, birthday = null, is_vip = 0, ai_quota = 5 } = userData;
-    
+
     const [existing] = await pool.query(`SELECT id FROM users WHERE email = ? LIMIT 1`, [email]);
     if (existing.length > 0) {
         const err = new Error('Email đã tồn tại trong hệ thống');
@@ -555,6 +570,8 @@ const updateUserAccount = async (userId, userData) => {
             params.push(d.toISOString().slice(0, 19).replace('T', ' '));
         } else {
             fields.push('vip_expires_at = NULL');
+            fields.push('package_code = NULL');
+            fields.push('package_name = NULL');
         }
     }
 
@@ -573,16 +590,19 @@ const updateUserRole = async (userId, role) => {
     await pool.query(`UPDATE users SET role = ? WHERE id = ?`, [role, userId]);
 };
 
-const updateUserVip = async (userId, isVip, days = 30, quota = 100) => {
+const updateUserVip = async (userId, isVip, days = 30, quota = 100, packageCode = null, packageName = null) => {
     let expiresAt = null;
     if (isVip) {
         const d = new Date();
         d.setDate(d.getDate() + Number(days));
         expiresAt = d.toISOString().slice(0, 19).replace('T', ' ');
     }
+
+    const normalizedPackageCode = isVip ? (packageCode || null) : null;
+    const normalizedPackageName = isVip ? (packageName || null) : null;
     await pool.query(
-        `UPDATE users SET is_vip = ?, vip_expires_at = ?, ai_quota = ? WHERE id = ?`,
-        [isVip ? 1 : 0, expiresAt, quota, userId]
+        `UPDATE users SET is_vip = ?, vip_expires_at = ?, package_code = ?, package_name = ?, ai_quota = ? WHERE id = ?`,
+        [isVip ? 1 : 0, expiresAt, normalizedPackageCode, normalizedPackageName, quota, userId]
     );
 };
 
@@ -703,14 +723,16 @@ const updateTransactionStatus = async (transId, status) => {
             const { user_id, package_code } = trans[0];
             let days = 30;
             let quota = 100;
+            let packageName = null;
             if (package_code) {
-                const [pkgs] = await pool.query(`SELECT duration_days, ai_quota FROM vip_packages WHERE code = ?`, [package_code]);
+                const [pkgs] = await pool.query(`SELECT duration_days, ai_quota, name FROM vip_packages WHERE code = ?`, [package_code]);
                 if (pkgs.length > 0) {
                     days = pkgs[0].duration_days;
                     quota = pkgs[0].ai_quota;
+                    packageName = pkgs[0].name || null;
                 }
             }
-            await updateUserVip(user_id, true, days, quota);
+            await updateUserVip(user_id, true, days, quota, package_code, packageName);
         }
     }
 };
@@ -767,33 +789,33 @@ const getDivinationHistory = async ({ user_id = null, device_id = null, limit = 
 };
 
 module.exports = {
-  createUsersTable,
-  findUserByDeviceIdFromDb,
-  findUserByIdFromDb,
-  findUserByEmail,
-  createDuplicateEmailError,
-  createInvalidBirthDataError,
-  isDuplicateEmailError,
-  generateUserCode,
-  formatUserRow,
-  upsertAstroProfile,
-  findUserByDeviceId,
-  findUserById,
-  ensureIndex,
-  getAllUsers,
-  getUsersByRole,
-  createUserAccount,
-  updateUserAccount,
-  deleteUserAccount,
-  updateUserRole,
-  updateUserVip,
-  getAdminStats,
-  getAllTransactions,
-  updateTransactionStatus,
-  deleteTransaction,
-  saveDivinationDraw,
-  getTodayDivinationDraw,
-  getDivinationHistory
+    createUsersTable,
+    findUserByDeviceIdFromDb,
+    findUserByIdFromDb,
+    findUserByEmail,
+    createDuplicateEmailError,
+    createInvalidBirthDataError,
+    isDuplicateEmailError,
+    generateUserCode,
+    formatUserRow,
+    upsertAstroProfile,
+    findUserByDeviceId,
+    findUserById,
+    ensureIndex,
+    getAllUsers,
+    getUsersByRole,
+    createUserAccount,
+    updateUserAccount,
+    deleteUserAccount,
+    updateUserRole,
+    updateUserVip,
+    getAdminStats,
+    getAllTransactions,
+    updateTransactionStatus,
+    deleteTransaction,
+    saveDivinationDraw,
+    getTodayDivinationDraw,
+    getDivinationHistory
 };
 
 

@@ -139,8 +139,9 @@ exports.getKnowledgeList = (req, res) => {
 /**
  * Controller: Train/Add New Knowledge Item to AI Knowledge Base (Admin API)
  */
-exports.addKnowledge = (req, res) => {
+exports.addKnowledge = async (req, res) => {
     try {
+
         const body = req.body || {};
         if (!body.title || !body.details) {
             return res.status(400).json({
@@ -152,6 +153,7 @@ exports.addKnowledge = (req, res) => {
         }
 
         const added = aiKnowledgeService.addKnowledgeItem(body);
+        await cacheService.clearAll();
         return res.json({
             status: 200,
             error: 0,

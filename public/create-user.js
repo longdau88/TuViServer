@@ -134,6 +134,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         const formData = new FormData(userForm);
         const userData = Object.fromEntries(formData.entries());
         userData.device_id = deviceId;
+        if (!userData.password || !userData.password.trim()) {
+            userData.password = '123456';
+        }
         if (selectedAvatarBase64) {
             userData.avatar_base64 = selectedAvatarBase64;
         }
@@ -152,4 +155,73 @@ document.addEventListener('DOMContentLoaded', async function () {
             submitButtonText.classList.remove('d-none');
         }
     });
+
+    // --- Mode Toggle: Create Profile vs Login ---
+    const btnShowLogin = document.getElementById('btn-show-login');
+    const btnShowCreate = document.getElementById('btn-show-create');
+    const loginFormContainer = document.getElementById('login-form-container');
+    const loginForm = document.getElementById('login-user-form');
+    const loginError = document.getElementById('login-error');
+    const formTitle = document.querySelector('.welcome-header h1');
+    const formSubtitle = document.querySelector('.welcome-header p');
+
+    btnShowLogin?.addEventListener('click', () => {
+        userForm?.classList.add('d-none');
+        loginFormContainer?.classList.remove('d-none');
+        if (formTitle) formTitle.textContent = 'Đăng Nhập Tài Khoản';
+        if (formSubtitle) formSubtitle.textContent = 'Nhập Email và Mật khẩu để đồng bộ hồ sơ trên thiết bị này.';
+    });
+
+    btnShowCreate?.addEventListener('click', () => {
+        loginFormContainer?.classList.add('d-none');
+        userForm?.classList.remove('d-none');
+        if (formTitle) formTitle.textContent = 'Tạo Hồ Sơ Của Bạn';
+        if (formSubtitle) formSubtitle.textContent = 'Nhập thông tin chính xác của bạn để bắt đầu hành trình khám phá vận mệnh.';
+    });
+
+    // Login submit
+    loginForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const loginEmail = document.getElementById('login-email').value.trim();
+        const loginPassword = document.getElementById('login-password').value;
+
+        if (loginError) loginError.classList.add('d-none');
+
+        try {
+            const res = await fetch('/api/user/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: loginEmail,
+                    password: loginPassword,
+                    device_id: deviceId
+                })
+            });
+
+            const json = await res.json();
+            if (json.status === 200 && json.data) {
+                const token = json.data.token || json.data.access_token;
+                if (token) {
+                    localStorage.setItem('webToken', token);
+                    localStorage.setItem('token', token);
+                }
+                if (json.data.user) {
+                    localStorage.setItem('tuvi_user_profile', JSON.stringify(json.data.user));
+                }
+                window.location.href = '/';
+            } else {
+                if (loginError) {
+                    loginError.textContent = json.message || 'Email hoặc Mật khẩu không đúng.';
+                    loginError.classList.remove('d-none');
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            if (loginError) {
+                loginError.textContent = 'Có lỗi xảy ra khi kết nối máy chủ.';
+                loginError.classList.remove('d-none');
+            }
+        }
+    });
 });
+

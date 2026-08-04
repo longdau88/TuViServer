@@ -73,6 +73,14 @@
                                     </div>
                                 </div>
                                 <div class="row">
+                                    <div class="col-md-12 mb-4">
+                                        <div class="form-floating">
+                                            <input type="password" class="form-control" id="password" name="password" placeholder="Mật khẩu (Tùy chọn)" />
+                                            <label for="password">Mật khẩu (Tùy chọn, mặc định: 123456)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
                                      <div class="col-md-6 mb-4">
                                         <div class="form-floating">
                                             <input type="date" class="form-control" id="birthday" name="birthday" required />
@@ -105,11 +113,46 @@
                                         </div>
                                     </button>
                                 </div>
+
+                                <div class="text-center mt-4 pt-3 border-top border-secondary">
+                                    <span class="text-light me-2">Bạn đã có tài khoản?</span>
+                                    <button type="button" class="btn btn-outline-warning rounded-pill px-4" id="btn-show-login">
+                                        <i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập Ngay
+                                    </button>
+                                </div>
                             </form>
+
+                            <!-- Login Form Section (Hidden by default) -->
+                            <div id="login-form-container" class="d-none">
+                                <h3 class="text-center text-warning mb-4"><i class="bi bi-shield-lock me-2"></i>Đăng Nhập Tài Khoản</h3>
+                                <form id="login-user-form">
+                                    <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
+                                    <div class="form-floating mb-4">
+                                        <input type="email" class="form-control" id="login-email" required placeholder="name@example.com" />
+                                        <label for="login-email">Email đăng nhập</label>
+                                    </div>
+                                    <div class="form-floating mb-4">
+                                        <input type="password" class="form-control" id="login-password" required placeholder="Mật khẩu" />
+                                        <label for="login-password">Mật khẩu</label>
+                                    </div>
+                                    <div class="d-grid gap-2 mb-3">
+                                        <button type="submit" class="btn btn-warning btn-lg fw-bold text-dark rounded-pill">
+                                            <i class="bi bi-box-arrow-in-right me-1"></i> ĐĂNG NHẬP
+                                        </button>
+                                    </div>
+                                    <div class="text-center mt-3">
+                                        <span class="text-light me-2">Chưa có tài khoản?</span>
+                                        <button type="button" class="btn btn-link text-warning p-0 text-decoration-none fw-bold" id="btn-show-create">
+                                            Tạo Hồ Sơ Mới
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
         </section>
     </main>
 

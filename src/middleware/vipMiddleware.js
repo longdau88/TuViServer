@@ -10,18 +10,21 @@ const { findUserById, findUserByDeviceId } = require('../models/userModel');
  */
 const isVipUser = (user) => {
     if (!user) return false;
+    // Admin always has full access
     if (user.role === 'admin') return true;
-    if (!user.vip_status || user.vip_status === 'free') return false;
-    
-    // Check expiration date if present
+    // Check is_vip boolean field (returned by formatUserRow from DB)
+    if (!user.is_vip) return false;
+
+    // Check expiration date if present (null/undefined = lifetime VIP)
     if (user.vip_expires_at) {
         const expiresDate = new Date(user.vip_expires_at);
         if (expiresDate < new Date()) {
-            return false; // Expired VIP
+            return false; // Expired VIP - no auto renew
         }
     }
     return true;
 };
+
 
 /**
  * Middleware: Require Active VIP Membership

@@ -48,6 +48,23 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentUser = null;
     let selectedAvatarBase64 = null;
 
+    const formatLocalDateOnlyVI = (value) => {
+        if (!value) return '';
+        const datePart = String(value).split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+        if (!year || !month || !day) return String(value);
+        return new Date(year, month - 1, day).toLocaleDateString('vi-VN');
+    };
+
+    const isVipExpired = (expiresAt) => {
+        if (!expiresAt) return false;
+        const datePart = String(expiresAt).split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+        if (!year || !month || !day) return false;
+        const expiryEnd = new Date(year, month - 1, day, 23, 59, 59, 999);
+        return expiryEnd < new Date();
+    };
+
     // --- Helper: Update Top Right Nav Avatar & VIP Package Status ---
     const updateNavAvatarUI = () => {
         if (!currentUser) {
@@ -67,31 +84,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Update User VIP Package Status Bar
         const pkgNameEl = document.getElementById('user-pkg-name');
+        const pkgExpiryEl = document.getElementById('user-pkg-expiry');
         const pkgBadgeEl = document.getElementById('user-pkg-badge');
 
-        if (pkgNameEl && pkgBadgeEl) {
-            const isVip = currentUser.vip_status && currentUser.vip_status !== 'free';
-            const isExpired = isVip && currentUser.vip_expires_at && new Date(currentUser.vip_expires_at) < new Date();
+        if (pkgNameEl && pkgBadgeEl && pkgExpiryEl) {
+            const packageName = currentUser.package_name || currentUser.package_code || 'Gói VIP';
+            const isVip = Boolean(currentUser.is_vip);
+            const hasExpiry = Boolean(currentUser.vip_expires_at);
+            const isExpired = isVip && hasExpiry && isVipExpired(currentUser.vip_expires_at);
 
             if (isVip && !isExpired) {
-                const expiresDateStr = currentUser.vip_expires_at ? new Date(currentUser.vip_expires_at).toLocaleDateString('vi-VN') : 'Vĩnh viễn';
-                pkgNameEl.innerText = `VIP (Hạn dùng: ${expiresDateStr})`;
-                pkgNameEl.className = 'text-warning font-bold';
+                pkgNameEl.innerText = packageName;
+                pkgExpiryEl.innerText = hasExpiry ? `Hạn dùng: ${formatLocalDateOnlyVI(currentUser.vip_expires_at)}` : 'Hạn dùng: Vĩnh viễn';
+                pkgNameEl.className = 'text-warning fw-bold';
                 pkgBadgeEl.innerText = 'VIP ACTIVE';
                 pkgBadgeEl.className = 'badge bg-warning text-dark ms-1';
             } else if (isExpired) {
-                pkgNameEl.innerText = 'Gói VIP Đã Hết Hạn';
-                pkgNameEl.className = 'text-danger font-bold';
+                pkgNameEl.innerText = packageName;
+                pkgExpiryEl.innerText = hasExpiry ? `Đã hết hạn: ${formatLocalDateOnlyVI(currentUser.vip_expires_at)}` : 'Đã hết hạn';
+                pkgNameEl.className = 'text-danger fw-bold';
                 pkgBadgeEl.innerText = 'Hết Hạn';
                 pkgBadgeEl.className = 'badge bg-danger text-white ms-1';
             } else {
                 pkgNameEl.innerText = 'Miễn Phí (Free)';
+                pkgExpiryEl.innerText = '';
                 pkgNameEl.className = 'text-light';
                 pkgBadgeEl.innerText = 'Free';
                 pkgBadgeEl.className = 'badge bg-secondary text-white ms-1';
             }
         }
     };
+
 
 
     // --- Screen Management ---
@@ -111,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (webToken) {
             headers['Authorization'] = `Bearer ${webToken}`;
         }
-        
+
         let response;
         try {
             response = await fetch(API_URL + endpoint, { ...options, headers });
@@ -152,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const goToCreateUserScreen = () => {
         window.location.href = '/create-user.html';
     };
-    
+
     const goToUpdateUserScreen = () => {
         window.location.href = '/update-user.html';
     };
@@ -170,12 +193,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    window.toggleLuanGiai = function() {
+    window.toggleLuanGiai = function () {
         const section = document.getElementById('luan-giai-section');
         if (section) {
             section.classList.toggle('d-none');
             if (!section.classList.contains('d-none')) {
-                section.scrollIntoView({behavior: 'smooth', block: 'start'});
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
     };
@@ -209,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="lg-header"><span>Bình giải 12 cung</span></div>
                 <div class="lg-content p-0">
                     <div class="accordion" id="accordion12Cung">`;
-            
+
             luanGiai.cung_12.forEach((cung, index) => {
                 html += `
                         <div class="accordion-item lg-accordion-item">
@@ -256,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (luanGiai.tieu_van) {
-             html += `
+            html += `
             <div class="luan-giai-block">
                 <div class="lg-header"><span>Bình giải Tiểu vận</span></div>
                 <div class="lg-content p-3">
@@ -275,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const meta = data.meta || {};
         const thongTin = data.thong_tin_trung_tam || {};
         const palacesObj = data.la_so_12_cung || {};
-        
+
         // Map lại mảng 12 cung từ object
         const cungs = Object.values(palacesObj).map(p => {
             return {
@@ -383,10 +406,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!svg) return;
 
         const coords = {
-            1: {x: 37.5, y: 87.5}, 2: {x: 62.5, y: 87.5}, 3: {x: 87.5, y: 87.5},
-            4: {x: 87.5, y: 62.5}, 5: {x: 87.5, y: 37.5}, 6: {x: 87.5, y: 12.5},
-            7: {x: 62.5, y: 12.5}, 8: {x: 37.5, y: 12.5}, 9: {x: 12.5, y: 12.5},
-            10: {x: 12.5, y: 37.5}, 11: {x: 12.5, y: 62.5}, 12: {x: 12.5, y: 87.5}
+            1: { x: 37.5, y: 87.5 }, 2: { x: 62.5, y: 87.5 }, 3: { x: 87.5, y: 87.5 },
+            4: { x: 87.5, y: 62.5 }, 5: { x: 87.5, y: 37.5 }, 6: { x: 87.5, y: 12.5 },
+            7: { x: 62.5, y: 12.5 }, 8: { x: 37.5, y: 12.5 }, 9: { x: 12.5, y: 12.5 },
+            10: { x: 12.5, y: 37.5 }, 11: { x: 12.5, y: 62.5 }, 12: { x: 12.5, y: 87.5 }
         };
 
         const menhCung = cungs.find(c => c.isMenh);
@@ -427,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (selectedAvatarBase64) {
             userData.avatar_base64 = selectedAvatarBase64;
         }
-        
+
         try {
             const createdOrUpdatedUser = await createUser(userData);
             currentUser = createdOrUpdatedUser;
@@ -459,11 +482,11 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('birthday').value = user.birthday;
         document.getElementById('birth_time').value = user.birth_time;
         document.querySelector(`input[name="gender"][value="${user.gender}"]`).checked = true;
-        
+
         if (user.avatar_url) {
             updateAvatarPreview(user.avatar_url);
             // Không gán vào selectedAvatarBase64 vì ta không muốn gửi lại base64 nếu user không đổi ảnh mới
-            selectedAvatarBase64 = null; 
+            selectedAvatarBase64 = null;
         } else {
             resetAvatarUI();
         }
@@ -510,9 +533,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const loadingText = document.querySelector('#initial-loading-screen h3');
             const errorContainer = document.getElementById('initial-error');
 
-            if(spinner) spinner.classList.add('d-none');
-            if(loadingText) loadingText.textContent = 'Không Thể Tải Ứng Dụng';
-            if(errorContainer) {
+            if (spinner) spinner.classList.add('d-none');
+            if (loadingText) loadingText.textContent = 'Không Thể Tải Ứng Dụng';
+            if (errorContainer) {
                 errorContainer.textContent = `Lỗi: ${error.message}. Vui lòng kiểm tra console (F12) để xem chi tiết và đảm bảo máy chủ backend đang chạy.`;
                 errorContainer.classList.remove('d-none');
             }
@@ -525,14 +548,14 @@ document.addEventListener('DOMContentLoaded', function () {
         resultsBackButton?.addEventListener('click', goToDashboard);
         dashboardBackButton?.addEventListener('click', goToDashboard);
         document.getElementById('navbar-brand')?.addEventListener('click', (e) => {
-             e.preventDefault();
-             if(currentUser) goToDashboard();
+            e.preventDefault();
+            if (currentUser) goToDashboard();
         });
 
         // Avatar events
         avatarEditBtn?.addEventListener('click', () => avatarFileInput?.click());
         avatarPreviewWrapper?.addEventListener('click', () => avatarFileInput?.click());
-        
+
         avatarRemoveBtn?.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent triggering wrapper click
             resetAvatarUI();
@@ -564,6 +587,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 currentUser = existingUser;
                 goToDashboard();
             } else {
+                // User not found (may have been deleted by admin) - clear all local data
+                localStorage.removeItem('webToken');
+                localStorage.removeItem('token');
+                localStorage.removeItem('tuvi_user_profile');
+                // Generate new deviceId to start fresh
+                deviceId = 'web-' + Date.now() + '-' + Math.random().toString(36).substring(2, 10);
+                localStorage.setItem('deviceId', deviceId);
                 goToCreateUserScreen();
             }
         } catch (error) {
@@ -572,13 +602,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const loadingText = document.querySelector('#initial-loading-screen h3');
             const errorContainer = document.getElementById('initial-error');
 
-            if(spinner) spinner.classList.add('d-none');
-            if(loadingText) loadingText.textContent = 'Lỗi Kết Nối Máy Chủ';
-            if(errorContainer) {
+            if (spinner) spinner.classList.add('d-none');
+            if (loadingText) loadingText.textContent = 'Lỗi Kết Nối Máy Chủ';
+            if (errorContainer) {
                 errorContainer.textContent = `Lỗi kết nối máy chủ: ${error.message}. Vui lòng kiểm tra lại kết nối hoặc thử lại sau.`;
                 errorContainer.classList.remove('d-none');
             }
         }
+
     };
 
     initializeApp();

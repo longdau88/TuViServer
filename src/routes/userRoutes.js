@@ -16,6 +16,8 @@ router.post('/compatibility', heavyReadLimiter, compatibilityController.getCompa
 router.post('/realtime-horoscope', heavyReadLimiter, realtimeHoroscopeController.getRealtimeHoroscope);
 router.get('/realtime-horoscope', heavyReadLimiter, realtimeHoroscopeController.getRealtimeHoroscope);
 router.get('/packages', userController.getPublicPackagesController);
+router.post('/login', userController.loginUserController);
+
 
 
 // New route for clearing all cache (protected)

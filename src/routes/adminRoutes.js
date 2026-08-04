@@ -33,9 +33,13 @@ router.put('/transactions/:id/status', adminController.updateTransactionStatusCo
 router.delete('/transactions/:id', adminController.deleteTransactionController);
 
 
+// System Cache Management
+router.post('/cache/clear-all', adminController.clearAllCache);
+
 // AI Knowledge Management
 router.get('/knowledge', aiController.getKnowledgeList);
 router.post('/knowledge', aiController.addKnowledge);
 router.delete('/knowledge/:id', adminController.deleteKnowledge);
+
 
 module.exports = router;

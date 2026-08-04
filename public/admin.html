@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,7 +39,7 @@
             font-family: var(--font-main);
             background-color: var(--bg-primary);
             color: var(--text-main);
-            background-image: 
+            background-image:
                 radial-gradient(circle at 15% 20%, rgba(124, 92, 255, 0.15) 0%, transparent 40%),
                 radial-gradient(circle at 85% 80%, rgba(212, 175, 55, 0.12) 0%, transparent 45%);
             min-height: 100vh;
@@ -288,7 +289,8 @@
             white-space: nowrap;
         }
 
-        .tab-btn.active, .tab-btn:hover {
+        .tab-btn.active,
+        .tab-btn:hover {
             color: var(--accent-gold);
             border-bottom-color: var(--accent-gold);
         }
@@ -309,8 +311,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .section-header {
@@ -357,7 +366,8 @@
             text-align: left;
         }
 
-        th, td {
+        th,
+        td {
             padding: 14px 18px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
@@ -452,7 +462,10 @@
         /* Modal */
         .modal-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: rgba(0, 0, 0, 0.75);
             backdrop-filter: blur(5px);
             display: none;
@@ -472,7 +485,7 @@
             width: 90%;
             max-width: 540px;
             padding: 28px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
         }
 
         .modal-header {
@@ -519,6 +532,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <!-- 1. LOGIN SCREEN -->
@@ -557,12 +571,18 @@
                 <span>TuViServer Admin Center</span>
             </div>
             <div class="user-info">
+                <button class="btn" onclick="clearSystemCache()"
+                    style="margin-right: 8px; background: linear-gradient(135deg, #ff9100, #d4af37); border: none; color: #000; font-weight: 600;">
+                    <i class="fa-solid fa-broom"></i> Xóa Cache Toàn Bộ
+                </button>
                 <div class="user-badge">
                     <i class="fa-solid fa-user-shield"></i>
                     <span id="adminNameDisplay">System Admin</span>
                 </div>
-                <button class="btn btn-danger" onclick="handleLogout()"><i class="fa-solid fa-power-off"></i> Đăng Xuất</button>
+                <button class="btn btn-danger" onclick="handleLogout()"><i class="fa-solid fa-power-off"></i> Đăng
+                    Xuất</button>
             </div>
+
         </nav>
 
         <!-- Main Container -->
@@ -579,14 +599,16 @@
                         <p id="statTotalUsers">0</p>
                     </div>
                 </div>
-                <div class="stat-card" onclick="navigateToTab('normalUsersTab', 'vip')" title="Lọc xem chỉ tài khoản VIP">
+                <div class="stat-card" onclick="navigateToTab('normalUsersTab', 'vip')"
+                    title="Lọc xem chỉ tài khoản VIP">
                     <div class="stat-icon purple"><i class="fa-solid fa-crown"></i></div>
                     <div class="stat-info">
                         <h3>Tài Khoản VIP</h3>
                         <p id="statVipUsers">0</p>
                     </div>
                 </div>
-                <div class="stat-card" onclick="navigateToTab('revenueTab')" title="Xem quản lý chi tiết doanh thu & lịch sử chuyển khoản">
+                <div class="stat-card" onclick="navigateToTab('revenueTab')"
+                    title="Xem quản lý chi tiết doanh thu & lịch sử chuyển khoản">
                     <div class="stat-icon green"><i class="fa-solid fa-money-bill-wave"></i></div>
                     <div class="stat-info">
                         <h3>Doanh Thu (VNĐ)</h3>
@@ -604,21 +626,32 @@
 
             <!-- Navigation Tabs -->
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('normalUsersTab', this)"><i class="fa-solid fa-users"></i> Quản Lý Khách Hàng</button>
-                <button class="tab-btn" onclick="switchTab('adminUsersTab', this)"><i class="fa-solid fa-user-shield"></i> Quản Lý Admin</button>
-                <button class="tab-btn" onclick="switchTab('revenueTab', this)"><i class="fa-solid fa-receipt"></i> Lịch Sử Doanh Thu & CK</button>
-                <button class="tab-btn" onclick="switchTab('packagesTab', this)"><i class="fa-solid fa-gem"></i> Gói Cước VIP</button>
-                <button class="tab-btn" onclick="switchTab('knowledgeTab', this)"><i class="fa-solid fa-book-sparkles"></i> Tri Thức AI (RAG)</button>
+                <button class="tab-btn active" onclick="switchTab('normalUsersTab', this)"><i
+                        class="fa-solid fa-users"></i> Quản Lý Khách Hàng</button>
+                <button class="tab-btn" onclick="switchTab('adminUsersTab', this)"><i
+                        class="fa-solid fa-user-shield"></i> Quản Lý Admin</button>
+                <button class="tab-btn" onclick="switchTab('revenueTab', this)"><i class="fa-solid fa-receipt"></i> Lịch
+                    Sử Doanh Thu & CK</button>
+                <button class="tab-btn" onclick="switchTab('packagesTab', this)"><i class="fa-solid fa-gem"></i> Gói
+                    Cước VIP</button>
+                <button class="tab-btn" onclick="switchTab('knowledgeTab', this)"><i
+                        class="fa-solid fa-book-sparkles"></i> Tri Thức AI (RAG)</button>
             </div>
 
             <!-- TAB 1: Normal Users Management -->
             <div id="normalUsersTab" class="tab-content active">
                 <div class="section-header">
-                    <div class="section-title"><i class="fa-solid fa-users" style="color: var(--accent-gold);"></i> Danh Sách Khách Hàng (Tài Khoản Thường)</div>
+                    <div class="section-title"><i class="fa-solid fa-users" style="color: var(--accent-gold);"></i> Danh
+                        Sách Khách Hàng (Tài Khoản Thường)</div>
                     <div class="search-box">
-                        <input type="text" id="userSearchInput" class="search-input" placeholder="Tìm theo tên/email...">
-                        <button class="btn" onclick="loadNormalUsers()"><i class="fa-solid fa-magnifying-glass"></i> Tìm</button>
-                        <button class="btn btn-purple" onclick="openAddAccountModal('user')"><i class="fa-solid fa-user-plus"></i> Thêm Khách Hàng</button>
+                        <input type="text" id="userSearchInput" class="search-input"
+                            placeholder="Tìm theo tên/email...">
+                        <button class="btn" onclick="loadNormalUsers()"><i class="fa-solid fa-magnifying-glass"></i>
+                            Tìm</button>
+                        <button class="btn btn-purple" onclick="openAddAccountModal('user')"><i
+                                class="fa-solid fa-user-plus"></i> Thêm Khách Hàng</button>
+                        <button class="btn btn-warning" onclick="openAssignVipPackageModal()"><i
+                                class="fa-solid fa-gem"></i> Cấp Gói Cho User</button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -635,7 +668,10 @@
                             </tr>
                         </thead>
                         <tbody id="normalUsersTableBody">
-                            <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Đang tải dữ liệu...</td></tr>
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted);">Đang tải dữ
+                                    liệu...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -644,11 +680,15 @@
             <!-- TAB 2: Admin Users Management -->
             <div id="adminUsersTab" class="tab-content">
                 <div class="section-header">
-                    <div class="section-title"><i class="fa-solid fa-user-shield" style="color: var(--accent-purple);"></i> Danh Sách Tài Khoản Quản Trị (Admin)</div>
+                    <div class="section-title"><i class="fa-solid fa-user-shield"
+                            style="color: var(--accent-purple);"></i> Danh Sách Tài Khoản Quản Trị (Admin)</div>
                     <div class="search-box">
-                        <input type="text" id="adminSearchInput" class="search-input" placeholder="Tìm theo tên/email...">
-                        <button class="btn" onclick="loadAdminUsers()"><i class="fa-solid fa-magnifying-glass"></i> Tìm</button>
-                        <button class="btn btn-purple" onclick="openAddAccountModal('admin')"><i class="fa-solid fa-plus"></i> Thêm Tài Khoản Admin</button>
+                        <input type="text" id="adminSearchInput" class="search-input"
+                            placeholder="Tìm theo tên/email...">
+                        <button class="btn" onclick="loadAdminUsers()"><i class="fa-solid fa-magnifying-glass"></i>
+                            Tìm</button>
+                        <button class="btn btn-purple" onclick="openAddAccountModal('admin')"><i
+                                class="fa-solid fa-plus"></i> Thêm Tài Khoản Admin</button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -664,7 +704,10 @@
                             </tr>
                         </thead>
                         <tbody id="adminUsersTableBody">
-                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Đang tải tài khoản Admin...</td></tr>
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-muted);">Đang tải tài khoản
+                                    Admin...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -673,7 +716,8 @@
             <!-- TAB 3: Revenue & Transaction History Management -->
             <div id="revenueTab" class="tab-content">
                 <div class="section-header">
-                    <div class="section-title"><i class="fa-solid fa-receipt" style="color: var(--accent-green);"></i> Quản Lý Chi Tiết Doanh Thu & Lịch Sử Chuyển Khoản</div>
+                    <div class="section-title"><i class="fa-solid fa-receipt" style="color: var(--accent-green);"></i>
+                        Quản Lý Chi Tiết Doanh Thu & Lịch Sử Chuyển Khoản</div>
                     <div class="search-box">
                         <select id="transStatusFilter" class="search-input" onchange="loadRevenueTransactions()">
                             <option value="">Tất cả trạng thái</option>
@@ -681,8 +725,10 @@
                             <option value="PENDING">⏳ Chờ Duyệt CK</option>
                             <option value="FAILED">❌ Thất Bại / Hủy</option>
                         </select>
-                        <input type="text" id="transSearchInput" class="search-input" placeholder="Mã GD / Email / Gói...">
-                        <button class="btn" onclick="loadRevenueTransactions()"><i class="fa-solid fa-magnifying-glass"></i> Tìm</button>
+                        <input type="text" id="transSearchInput" class="search-input"
+                            placeholder="Mã GD / Email / Gói...">
+                        <button class="btn" onclick="loadRevenueTransactions()"><i
+                                class="fa-solid fa-magnifying-glass"></i> Tìm</button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -700,7 +746,10 @@
                             </tr>
                         </thead>
                         <tbody id="transactionsTableBody">
-                            <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Đang tải lịch sử chuyển khoản...</td></tr>
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: var(--text-muted);">Đang tải lịch sử
+                                    chuyển khoản...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -709,8 +758,10 @@
             <!-- TAB 4: VIP Packages -->
             <div id="packagesTab" class="tab-content">
                 <div class="section-header">
-                    <div class="section-title"><i class="fa-solid fa-gem" style="color: var(--accent-gold);"></i> Gói Cước VIP & Giá</div>
-                    <button class="btn btn-purple" onclick="openPackageModal()"><i class="fa-solid fa-plus"></i> Thêm Gói Mới</button>
+                    <div class="section-title"><i class="fa-solid fa-gem" style="color: var(--accent-gold);"></i> Gói
+                        Cước VIP & Giá</div>
+                    <button class="btn btn-purple" onclick="openPackageModal()"><i class="fa-solid fa-plus"></i> Thêm
+                        Gói Mới</button>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -726,7 +777,10 @@
                             </tr>
                         </thead>
                         <tbody id="packagesTableBody">
-                            <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Đang tải gói cước...</td></tr>
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted);">Đang tải gói
+                                    cước...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -735,8 +789,10 @@
             <!-- TAB 5: AI Knowledge Base -->
             <div id="knowledgeTab" class="tab-content">
                 <div class="section-header">
-                    <div class="section-title"><i class="fa-solid fa-brain" style="color: var(--accent-gold);"></i> Kho Tri Thức Huấn Luyện AI Tử Vi</div>
-                    <button class="btn" onclick="openKnowledgeModal()"><i class="fa-solid fa-plus"></i> Nạp Tri Thức Mới</button>
+                    <div class="section-title"><i class="fa-solid fa-brain" style="color: var(--accent-gold);"></i> Kho
+                        Tri Thức Huấn Luyện AI Tử Vi</div>
+                    <button class="btn" onclick="openKnowledgeModal()"><i class="fa-solid fa-plus"></i> Nạp Tri Thức
+                        Mới</button>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -751,7 +807,10 @@
                             </tr>
                         </thead>
                         <tbody id="knowledgeTableBody">
-                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Đang tải tri thức AI...</td></tr>
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-muted);">Đang tải tri thức
+                                    AI...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -848,7 +907,36 @@
                 <label>Mô Tả Gói</label>
                 <textarea id="pkgDesc" class="form-control" rows="3" placeholder="Quyền lợi của gói..."></textarea>
             </div>
-            <button class="btn btn-purple" style="width: 100%; margin-top: 10px;" onclick="submitPackage()"><i class="fa-solid fa-plus"></i> Tạo Gói Cước</button>
+            <button class="btn btn-purple" style="width: 100%; margin-top: 10px;" onclick="submitPackage()"><i
+                    class="fa-solid fa-plus"></i> Tạo Gói Cước</button>
+        </div>
+    </div>
+
+    <!-- Assign VIP Package Modal -->
+    <div id="assignVipPackageModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Cấp Gói Cước Cho User</h3>
+                <button class="modal-close" onclick="closeModal('assignVipPackageModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Chọn Người Dùng</label>
+                <select id="assignUserId" class="form-control"></select>
+            </div>
+            <div class="form-group">
+                <label>Chọn Gói Cước</label>
+                <select id="assignPackageCode" class="form-control" onchange="syncAssignPackagePreview()"></select>
+            </div>
+            <div class="form-group">
+                <label>Ngày Bắt Đầu</label>
+                <input type="date" id="assignStartDate" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Thông Tin Gói</label>
+                <input type="text" id="assignPackageSummary" class="form-control" readonly>
+            </div>
+            <button class="btn btn-warning" style="width: 100%; margin-top: 10px; color: #111; font-weight: 700;"
+                onclick="submitVipPackageAssignment()"><i class="fa-solid fa-gem"></i> Cấp Gói Cho User</button>
         </div>
     </div>
 
@@ -873,15 +961,27 @@
             </div>
             <div class="form-group">
                 <label>Nội Dụng Tri Thức Chi Tiết</label>
-                <textarea id="knDetails" class="form-control" rows="5" placeholder="Bài học chi tiết cho AI..."></textarea>
+                <textarea id="knDetails" class="form-control" rows="5"
+                    placeholder="Bài học chi tiết cho AI..."></textarea>
             </div>
-            <button class="btn" style="width: 100%; margin-top: 10px;" onclick="submitKnowledge()"><i class="fa-solid fa-brain"></i> Nạp Tri Thức</button>
+            <button class="btn" style="width: 100%; margin-top: 10px;" onclick="submitKnowledge()"><i
+                    class="fa-solid fa-brain"></i> Nạp Tri Thức</button>
         </div>
     </div>
 
     <!-- Script Admin Control Logic -->
     <script>
         let adminToken = sessionStorage.getItem('admin_auth_token') || localStorage.getItem('admin_auth_token') || '';
+        window.usersStore = {};
+        window.vipPackageStore = [];
+
+        function formatLocalDateOnlyVI(value) {
+            if (!value) return '';
+            const datePart = String(value).split('T')[0];
+            const [year, month, day] = datePart.split('-').map(Number);
+            if (!year || !month || !day) return String(value);
+            return new Date(year, month - 1, day).toLocaleDateString('vi-VN');
+        }
 
         async function handleLogin(event) {
             event.preventDefault();
@@ -902,7 +1002,7 @@
                     adminToken = json.data.token;
                     sessionStorage.setItem('admin_auth_token', adminToken);
                     localStorage.setItem('admin_auth_token', adminToken);
-                    
+
                     if (json.data.user && json.data.user.name) {
                         document.getElementById('adminNameDisplay').innerText = json.data.user.name;
                     }
@@ -945,6 +1045,27 @@
             el.style.display = 'block';
             setTimeout(() => { el.style.display = 'none'; }, 4000);
         }
+
+        // Universal modal close function — called by all ✕ buttons
+        function closeModal(modalId) {
+            const el = document.getElementById(modalId);
+            if (el) el.classList.remove('active');
+        }
+
+        // Close modal when clicking outside the modal-box (on the overlay backdrop)
+        document.addEventListener('click', function (e) {
+            if (e.target && e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
+                e.target.classList.remove('active');
+            }
+        });
+
+        // Close any open modal with Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+            }
+        });
+
 
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -996,7 +1117,10 @@
                             <td>#${u.id}</td>
                             <td><strong>${u.full_name || 'N/A'}</strong></td>
                             <td>${u.email}</td>
-                            <td><span class="badge badge-vip"><i class="fa-solid fa-crown"></i> VIP Active</span></td>
+                            <td>
+                                <span class="badge badge-vip"><i class="fa-solid fa-crown"></i> VIP Active</span><br>
+                                <small style="color: var(--text-muted);">${u.package_name || u.package_code || 'Gói VIP'}${u.vip_expires_at ? ` · Hạn dùng: ${formatLocalDateOnlyVI(u.vip_expires_at)}` : ''}</small>
+                            </td>
                             <td>${u.ai_quota} lượt/ngày</td>
                             <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : 'N/A'}</td>
                             <td>
@@ -1058,8 +1182,8 @@
                         if (t.status === 'SUCCESS') statusBadge = '<span class="badge badge-success">✅ Đã Nhận Tiền</span>';
                         if (t.status === 'FAILED' || t.status === 'CANCELLED') statusBadge = '<span class="badge badge-failed">❌ Đã Hủy</span>';
 
-                        const paidTimeDisplay = t.paid_at 
-                            ? `<span style="color: var(--accent-green); font-weight: 600;"><i class="fa-regular fa-clock"></i> ${new Date(t.paid_at).toLocaleString('vi-VN')}</span>` 
+                        const paidTimeDisplay = t.paid_at
+                            ? `<span style="color: var(--accent-green); font-weight: 600;"><i class="fa-regular fa-clock"></i> ${new Date(t.paid_at).toLocaleString('vi-VN')}</span>`
                             : `<span style="color: var(--text-muted);">${new Date(t.created_at).toLocaleString('vi-VN')}</span>`;
 
                         return `
@@ -1143,12 +1267,16 @@
                             <td>#${u.id}</td>
                             <td><strong>${u.full_name || 'N/A'}</strong></td>
                             <td>${u.email}</td>
-                            <td><span class="badge ${u.is_vip ? 'badge-vip' : 'badge-free'}">${u.is_vip ? 'VIP Active' : 'Thường'}</span></td>
+                            <td>
+                                <span class="badge ${u.is_vip ? 'badge-vip' : 'badge-free'}">${u.is_vip ? 'VIP Active' : 'Thường'}</span><br>
+                                <small style="color: var(--text-muted);">${u.is_vip ? `${u.package_name || u.package_code || 'Gói VIP'}${u.vip_expires_at ? ` · Hạn dùng: ${formatLocalDateOnlyVI(u.vip_expires_at)}` : ''}` : 'Chưa có gói cước'}</small>
+                            </td>
                             <td>${u.ai_quota} lượt/ngày</td>
                             <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : 'N/A'}</td>
                             <td>
                                 <div class="action-btns">
                                     <button class="btn btn-sm" onclick="openEditAccountModal(${u.id})"><i class="fa-solid fa-pen-to-square"></i> Sửa</button>
+                                    <button class="btn btn-sm btn-warning" onclick="openAssignVipPackageModal(${u.id})"><i class="fa-solid fa-gem"></i> Cấp gói</button>
                                     <button class="btn btn-sm btn-danger" onclick="deleteUserAccount(${u.id})"><i class="fa-solid fa-trash"></i> Xóa</button>
                                 </div>
                             </td>
@@ -1292,6 +1420,7 @@
                 const tbody = document.getElementById('packagesTableBody');
                 if (json.status === 200) {
                     const pkgs = json.data || [];
+                    window.vipPackageStore = pkgs;
                     if (pkgs.length === 0) {
                         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Chưa có gói cước nào</td></tr>`;
                         return;
@@ -1314,7 +1443,83 @@
         }
 
         function openPackageModal() { document.getElementById('addPackageModal').classList.add('active'); }
-        
+
+        async function openAssignVipPackageModal(userId = '') {
+            try {
+                if (!window.vipPackageStore || window.vipPackageStore.length === 0) {
+                    await loadPackages();
+                }
+
+                const userRes = await fetch('/api/admin/users?role=user&limit=500', { headers: getAuthHeaders() });
+                const userJson = await userRes.json();
+                const userSelect = document.getElementById('assignUserId');
+                const packageSelect = document.getElementById('assignPackageCode');
+                const summaryInput = document.getElementById('assignPackageSummary');
+
+                const users = (userJson.status === 200 && userJson.data && userJson.data.users) ? userJson.data.users : [];
+                userSelect.innerHTML = ['<option value="">-- Chọn user --</option>']
+                    .concat(users.map(u => `<option value="${u.id}" ${String(u.id) === String(userId) ? 'selected' : ''}>#${u.id} - ${u.full_name || u.email}</option>`))
+                    .join('');
+
+                const packages = window.vipPackageStore || [];
+                packageSelect.innerHTML = ['<option value="">-- Chọn gói --</option>']
+                    .concat(packages.map(p => `<option value="${p.code}">${p.name} (${Number(p.price).toLocaleString('vi-VN')}đ)</option>`))
+                    .join('');
+
+                document.getElementById('assignStartDate').value = new Date().toISOString().slice(0, 10);
+                syncAssignPackagePreview();
+                summaryInput.value = 'Chọn gói để xem thông tin chi tiết';
+                document.getElementById('assignVipPackageModal').classList.add('active');
+            } catch (err) {
+                console.error(err);
+                alert('Không thể tải danh sách user/gói cước để cấp gói.');
+            }
+        }
+
+        function syncAssignPackagePreview() {
+            const packageCode = document.getElementById('assignPackageCode').value;
+            const summaryInput = document.getElementById('assignPackageSummary');
+            const pkg = (window.vipPackageStore || []).find(item => item.code === packageCode);
+            if (!pkg) {
+                summaryInput.value = 'Chọn gói để xem thông tin chi tiết';
+                return;
+            }
+            summaryInput.value = `${pkg.name} • ${Number(pkg.duration_days || 30)} ngày • ${Number(pkg.ai_quota || 0)} lượt/ngày`;
+        }
+
+        async function submitVipPackageAssignment() {
+            const userId = document.getElementById('assignUserId').value;
+            const packageCode = document.getElementById('assignPackageCode').value;
+
+            if (!userId) {
+                alert('Vui lòng chọn user cần cấp gói');
+                return;
+            }
+            if (!packageCode) {
+                alert('Vui lòng chọn gói cước');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/admin/users/${userId}/vip`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ is_vip: 1, package_code: packageCode })
+                });
+                const json = await res.json();
+                if (json.status === 200) {
+                    showAlert(json.message || 'Đã cấp gói cho user');
+                    closeModal('assignVipPackageModal');
+                    loadDashboardData();
+                } else {
+                    alert(json.message || 'Không thể cấp gói cho user');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Lỗi kết nối tới máy chủ!');
+            }
+        }
+
         async function submitPackage() {
             const body = {
                 code: document.getElementById('pkgCode').value.trim(),
@@ -1407,8 +1612,22 @@
             }
         }
 
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('active');
+        async function clearSystemCache() {
+            try {
+                const res = await fetch('/api/admin/cache/clear-all', {
+                    method: 'POST',
+                    headers: getAuthHeaders()
+                });
+                const json = await res.json();
+                if (json.status === 200) {
+                    showAlert('⚡ Đã xóa sạch toàn bộ Cache hệ thống (Redis) thành công!');
+                } else {
+                    alert(json.message || 'Lỗi khi xóa cache hệ thống');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Có lỗi xảy ra khi gọi API xóa cache.');
+            }
         }
 
         // Auto check login session on load
@@ -1417,6 +1636,8 @@
                 showDashboard();
             }
         });
+
     </script>
 </body>
+
 </html>
