@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (user.birthday) document.getElementById('p1-birthday').value = user.birthday;
             if (user.birth_time) document.getElementById('p1-birthtime').value = user.birth_time;
             if (user.gender) {
-                if (/female|nu/i.test(user.gender)) {
+                if (/female|nu|nữ/i.test(user.gender)) {
                     document.getElementById('p1-female').checked = true;
                 } else {
                     document.getElementById('p1-male').checked = true;

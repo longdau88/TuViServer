@@ -76,7 +76,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function updateSelfProfileUI() {
         if (selfProfile && selfProfile.full_name && selfProfile.birthday) {
-            selfDisplayText.innerHTML = `<i class="bi bi-person-check-fill me-1"></i> ${selfProfile.full_name} | Ngày sinh: ${selfProfile.birthday}`;
+            const dateParts = selfProfile.birthday.split('-');
+            const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : selfProfile.birthday;
+            selfDisplayText.innerHTML = `<i class="bi bi-person-check-fill me-1"></i> ${selfProfile.full_name} | Ngày sinh: ${formattedDate}`;
         } else {
             selfDisplayText.innerHTML = `<i class="bi bi-person-fill me-1"></i> Chưa chọn thông tin bản thân`;
         }

@@ -1,0 +1,18 @@
+[
+    {
+        "id": "tarot_spread_01",
+        "category": "tarot_spreads",
+        "keywords": ["trải bài 3 lá", "quá khứ hiện tại tương lai", "spread", "trải bài"],
+        "title": "Trải Bài 3 Lá (Quá Khứ - Hiện Tại - Tương Lai)",
+        "summary": "Trải bài phổ biến và đơn giản nhất, cung cấp cái nhìn tổng quan về sự phát triển của một sự kiện theo thời gian.",
+        "details": "- Lá 1 (Quá Khứ): Nguyên nhân sâu xa, gốc rễ của vấn đề, những gì đã xảy ra ảnh hưởng đến hiện tại.\n- Lá 2 (Hiện Tại): Hoàn cảnh hiện tại, trạng thái tâm lý hoặc sự kiện đang diễn ra.\n- Lá 3 (Tương Lai): Kết quả có thể xảy ra nếu giữ nguyên hướng đi hiện tại, hoặc lời khuyên cho bước đi tiếp theo."
+    },
+    {
+        "id": "tarot_spread_02",
+        "category": "tarot_spreads",
+        "keywords": ["trải bài celtic cross", "thánh giá celtic", "spread", "trải bài"],
+        "title": "Trải Bài Celtic Cross (Thánh Giá Celtic 10 lá)",
+        "summary": "Trải bài phức tạp và chi tiết nhất để đi sâu vào một vấn đề, phân tích cả nội tâm, ngoại cảnh và kết quả.",
+        "details": "Trải bài 10 lá:\n1. Hiện trạng (Trái tim của vấn đề)\n2. Thách thức (Điều cản trở)\n3. Nền tảng tiềm thức (Gốc rễ bên trong)\n4. Quá khứ gần\n5. Mục tiêu/Hy vọng (Ý thức)\n6. Tương lai gần\n7. Bản thân người hỏi (Thái độ)\n8. Yếu tố ngoại cảnh (Môi trường, người khác)\n9. Hy vọng hoặc nỗi sợ hãi lớn nhất\n10. Kết quả cuối cùng."
+    }
+]

@@ -68,7 +68,7 @@ exports.getRealtimeHoroscope = async (req, res) => {
         // Check Redis Cache
         const cachedData = await cacheService.get(cacheKey);
         if (cachedData !== undefined) {
-            res.set('Cache-Control', 'private, max-age=300');
+            res.set('Cache-Control', 'no-store');
             return res.json({
                 status: 200,
                 error: 0,
@@ -83,7 +83,7 @@ exports.getRealtimeHoroscope = async (req, res) => {
         // Store to cache (TTL: 30 minutes)
         await cacheService.set(cacheKey, forecast, 1800);
 
-        res.set('Cache-Control', 'private, max-age=300');
+        res.set('Cache-Control', 'no-store');
         return res.json({
             status: 200,
             error: 0,

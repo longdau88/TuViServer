@@ -1,0 +1,34 @@
+[
+    {
+        "id": "tarot_major_00",
+        "category": "tarot",
+        "keywords": ["the fool", "kẻ khờ", "lá bài số 0", "khởi đầu"],
+        "title": "The Fool (Lá Số 0)",
+        "summary": "Đại diện cho sự khởi đầu mới, niềm tin ngây thơ, sự tự do và những chuyến phiêu lưu mạo hiểm.",
+        "details": "Ý nghĩa xuôi: Một khởi đầu mới, sự tinh khôi, tính tự phát, tự do, sẵn sàng nắm lấy rủi ro. Khuyên bạn nên bước ra khỏi vùng an toàn. \nÝ nghĩa ngược: Sự ngây thơ mù quáng, liều lĩnh thiếu suy nghĩ, bị lừa dối, hoặc sợ hãi không dám bắt đầu một điều mới."
+    },
+    {
+        "id": "tarot_major_01",
+        "category": "tarot",
+        "keywords": ["the magician", "pháp sư", "lá bài số 1", "sáng tạo"],
+        "title": "The Magician (Lá Số 1)",
+        "summary": "Đại diện cho sức mạnh, kỹ năng, sự tập trung và khả năng hiện thực hóa ý tưởng.",
+        "details": "Ý nghĩa xuôi: Khả năng biểu lộ (manifestation), kỹ năng xuất sắc, sự tự tin, sức mạnh ý chí. Bạn có đủ mọi công cụ để thành công. \nÝ nghĩa ngược: Thao túng, tiềm năng chưa được khai thác, tài năng bị lãng phí, mưu mô thủ đoạn."
+    },
+    {
+        "id": "tarot_major_06",
+        "category": "tarot",
+        "keywords": ["the lovers", "tình nhân", "lá bài số 6", "tình yêu"],
+        "title": "The Lovers (Lá Số 6)",
+        "summary": "Đại diện cho tình yêu, sự kết nối, sự hòa hợp và những sự lựa chọn quan trọng từ trái tim.",
+        "details": "Ý nghĩa xuôi: Tình yêu chân chính, sự hòa hợp sâu sắc, các mối quan hệ đối tác hoàn hảo, sự lựa chọn đúng đắn. \nÝ nghĩa ngược: Mất cân bằng, tình cảm rạn nứt, lựa chọn sai lầm, sợ hãi cam kết, hoặc bị lừa dối trong tình cảm."
+    },
+    {
+        "id": "tarot_major_10",
+        "category": "tarot",
+        "keywords": ["wheel of fortune", "vòng quay số phận", "lá bài số 10", "định mệnh"],
+        "title": "Wheel of Fortune (Lá Số 10)",
+        "summary": "Đại diện cho sự thay đổi, định mệnh, vận may và chu kỳ của cuộc sống.",
+        "details": "Ý nghĩa xuôi: Vận may đang đến, sự thay đổi tích cực, một chu kỳ mới bắt đầu, nghiệp quả tốt. \nÝ nghĩa ngược: Vận rủi, sự thay đổi không mong muốn, bị mắc kẹt trong hoàn cảnh cũ, đánh mất quyền kiểm soát."
+    }
+]

@@ -1,0 +1,77 @@
+{
+  "domain_info": {
+    "name": "Tử Vi & Phong Thủy Việt Nam Core Knowledge System",
+    "version": "2.0.0",
+    "description": "Kho tri thức chuyên sâu phục vụ Model AI Nội Bộ luận giải Tử Vi, Phong Thủy, Tướng Số, Tarot và Hợp Tuổi"
+  },
+  "branch_relations": {
+    "tam_hop": {
+      "Thân": ["Thân", "Tý", "Thìn"],
+      "Tý": ["Thân", "Tý", "Thìn"],
+      "Thìn": ["Thân", "Tý", "Thìn"],
+      "Dần": ["Dần", "Ngọ", "Tuất"],
+      "Ngọ": ["Dần", "Ngọ", "Tuất"],
+      "Tuất": ["Dần", "Ngọ", "Tuất"],
+      "Tỵ": ["Tỵ", "Dậu", "Sửu"],
+      "Dậu": ["Tỵ", "Dậu", "Sửu"],
+      "Sửu": ["Tỵ", "Dậu", "Sửu"],
+      "Hợi": ["Hợi", "Mão", "Mùi"],
+      "Mão": ["Hợi", "Mão", "Mùi"],
+      "Mùi": ["Hợi", "Mão", "Mùi"]
+    },
+    "luc_hop": {
+      "Tý": "Sửu", "Sửu": "Tý",
+      "Dần": "Hợi", "Hợi": "Dần",
+      "Mão": "Tuất", "Tuất": "Mão",
+      "Thìn": "Dậu", "Dậu": "Thìn",
+      "Tỵ": "Thân", "Thân": "Tỵ",
+      "Ngọ": "Mùi", "Mùi": "Ngọ"
+    },
+    "tu_hanh_xung": {
+      "Tý": ["Ngọ", "Mão", "Dậu"],
+      "Ngọ": ["Tý", "Mão", "Dậu"],
+      "Mão": ["Dậu", "Tý", "Ngọ"],
+      "Dậu": ["Mão", "Tý", "Ngọ"],
+      "Dần": ["Thân", "Tỵ", "Hợi"],
+      "Thân": ["Dần", "Tỵ", "Hợi"],
+      "Tỵ": ["Hợi", "Dần", "Thân"],
+      "Hợi": ["Tỵ", "Dần", "Thân"],
+      "Thìn": ["Tuất", "Sửu", "Mùi"],
+      "Tuất": ["Thìn", "Sửu", "Mùi"],
+      "Sửu": ["Mùi", "Thìn", "Tuất"],
+      "Mùi": ["Sửu", "Thìn", "Tuất"]
+    }
+  },
+  "cung_bat_trach": {
+    "Khảm": { "group": "Đông Tứ Mệnh", "good_directions": ["Đông (Thiên Y)", "Đông Nam (Sinh Khí)", "Nam (Diên Niên)", "Bắc (Phục Vị)"], "bad_directions": ["Tây (Họa Hại)", "Tây Bắc (Lục Sát)", "Tây Nam (Tuyệt Mệnh)", "Đông Bắc (Ngũ Quỷ)"] },
+    "Chấn": { "group": "Đông Tứ Mệnh", "good_directions": ["Nam (Sinh Khí)", "Bắc (Thiên Y)", "Đông Nam (Diên Niên)", "Đông (Phục Vị)"], "bad_directions": ["Tây (Tuyệt Mệnh)", "Tây Bắc (Ngũ Quỷ)", "Tây Nam (Họa Hại)", "Đông Bắc (Lục Sát)"] },
+    "Tốn": { "group": "Đông Tứ Mệnh", "good_directions": ["Bắc (Sinh Khí)", "Nam (Thiên Y)", "Đông (Diên Niên)", "Đông Nam (Phục Vị)"], "bad_directions": ["Tây Bắc (Họa Hại)", "Tây (Lục Sát)", "Đông Bắc (Tuyệt Mệnh)", "Tây Nam (Ngũ Quỷ)"] },
+    "Ly": { "group": "Đông Tứ Mệnh", "good_directions": ["Đông (Sinh Khí)", "Đông Nam (Thiên Y)", "Bắc (Diên Niên)", "Nam (Phục Vị)"], "bad_directions": ["Tây Bắc (Tuyệt Mệnh)", "Tây (Ngũ Quỷ)", "Tây Nam (Lục Sát)", "Đông Bắc (Họa Hại)"] },
+    "Càn": { "group": "Tây Tứ Mệnh", "good_directions": ["Tây (Sinh Khí)", "Đông Bắc (Thiên Y)", "Tây Nam (Diên Niên)", "Tây Bắc (Phục Vị)"], "bad_directions": ["Nam (Tuyệt Mệnh)", "Đông (Ngũ Quỷ)", "Đông Nam (Họa Hại)", "Bắc (Lục Sát)"] },
+    "Khôn": { "group": "Tây Tứ Mệnh", "good_directions": ["Đông Bắc (Sinh Khí)", "Tây (Thiên Y)", "Tây Bắc (Diên Niên)", "Tây Nam (Phục Vị)"], "bad_directions": ["Bắc (Tuyệt Mệnh)", "Đông Nam (Ngũ Quỷ)", "Nam (Lục Sát)", "Đông (Họa Hại)"] },
+    "Cấn": { "group": "Tây Tứ Mệnh", "good_directions": ["Tây Nam (Sinh Khí)", "Tây Bắc (Thiên Y)", "Tây (Diên Niên)", "Đông Bắc (Phục Vị)"], "bad_directions": ["Đông Nam (Tuyệt Mệnh)", "Bắc (Ngũ Quỷ)", "Đông (Lục Sát)", "Nam (Họa Hại)"] },
+    "Đoài": { "group": "Tây Tứ Mệnh", "good_directions": ["Tây Bắc (Sinh Khí)", "Tây Nam (Thiên Y)", "Đông Bắc (Diên Niên)", "Tây (Phục Vị)"], "bad_directions": ["Đông (Tuyệt Mệnh)", "Nam (Ngũ Quỷ)", "Bắc (Họa Hại)", "Đông Nam (Lục Sát)"] }
+  },
+  "tuong_so_topics": {
+    "not_ruoi": {
+      "cam": "Nốt ruồi ở cằm liên quan đến lộc điền trạch (đất đai, bất động sản) và hậu vận. Cằm trái báo hiệu sự nghiệp vững vàng, cằm phải báo hiệu gia đạo ấm êm.",
+      "tran": "Trán thuộc Cung Quan Lộc. Nốt ruồi trán thể hiện trí tuệ, khả năng lãnh đạo và vận trình sự nghiệp. Nốt ruồi son ở trán báo hiệu Quý Nhân phù trợ.",
+      "mui": "Mũi là Cung Tài Bạch. Nốt ruồi ở đầu mũi (Chu Chuẩn) báo hiệu năng lượng tài lộc tốt, nhưng cần chú ý giữ tiền và quản lý chi tiêu.",
+      "mat": "Khu vực quanh mắt (Cung Phu Thê & Lệ Đường) phản ánh tình cảm đôi lứa và đời sống nội tâm. Nốt ruồi ở lệ đường thể hiện người giàu tình cảm, sâu sắc."
+    },
+    "dien_tuong": {
+      "tran_cao": "Trán cao rộng thể hiện tư duy logic nhạy bén, khả năng học vấn xuất sắc và tầm nhìn chiến lược xa rộng.",
+      "mat_sang": "Ánh mắt sáng, thần khí tinh anh là tướng người quân tử, kiên định, dễ gặt hái thành công lớn trong sự nghiệp.",
+      "long_may": "Lông mày rậm thanh tú thể hiện tình cảm bạn bè anh em gắn kết, có uy tín và lòng tin vững chắc."
+    }
+  },
+  "tarot_and_divination": {
+    "tarot_major": {
+      "The Sun": "Đại diện cho niềm vui rực rỡ, thành công, năng lượng tích cực và sự minh bạch hoàn toàn.",
+      "The Moon": "Đại diện cho trực giác, hoài nghi, nỗi sợ ẩn giấu và những điều chưa bộc lộ.",
+      "The Star": "Đại diện cho niềm hy vọng, sự chữa lành, cảm hứng sáng tạo và tương lai tươi sáng.",
+      "The Lovers": "Đại diện cho tình yêu sâu sắc, sự kết nối tâm hồn và những quyết định quan trọng từ trái tim.",
+      "The Wheel of Fortune": "Đại diện cho vòng quay vận mệnh, cơ hội bất ngờ và sự thay đổi tích cực."
+    }
+  }
+}

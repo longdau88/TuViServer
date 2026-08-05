@@ -1,0 +1,18 @@
+[
+    {
+        "id": "tuong_so_01",
+        "category": "tuong_so",
+        "keywords": ["tướng mặt", "ngũ quan", "tam đình", "trán", "mũi", "mắt"],
+        "title": "Tướng Mặt Cơ Bản (Ngũ Quan & Tam Đình)",
+        "summary": "Hướng dẫn cơ bản về xem tướng mặt dựa trên Ngũ Quan (Mắt, Mũi, Miệng, Tai, Lông Mày) và Tam Đình (Thượng, Trung, Hạ).",
+        "details": "1. **Tam Đình**: Thượng đình (trán đến chân mày) chỉ tiền vận và trí tuệ. Trung đình (chân mày đến dưới mũi) chỉ trung vận và nỗ lực. Hạ đình (nhân trung đến cằm) chỉ hậu vận và điền trạch. \n2. **Ngũ Quan**: \n - **Bảo Thọ Quan (Lông mày)**: Thể hiện anh em, tuổi thọ, danh khí. Lông mày thanh tú, dài quá mắt là tướng quý.\n - **Giám Sát Quan (Mắt)**: Thể hiện trí tuệ, thiện ác. Mắt sáng, có thần là người thông minh, quân tử.\n - **Thẩm Biện Quan (Mũi)**: Thể hiện tài lộc (Tài Bạch). Mũi cao, cánh mũi nảy nở là tướng giàu có.\n - **Xuất Nạp Quan (Miệng)**: Thể hiện phước lộc, giao tiếp. Miệng vuông vức, môi hồng hào là tướng hưởng lộc.\n - **Thám Thính Quan (Tai)**: Thể hiện sức khỏe, tuổi thọ. Tai to, dầy, dái tai rủ là tướng trường thọ."
+    },
+    {
+        "id": "tuong_so_02",
+        "category": "tuong_so",
+        "keywords": ["chỉ tay", "tướng tay", "đường sinh đạo", "đường trí đạo", "đường tâm đạo"],
+        "title": "Tướng Chỉ Tay Cơ Bản",
+        "summary": "Giải nghĩa 3 đường chỉ tay chính: Sinh đạo (Sức khỏe), Trí đạo (Trí tuệ), Tâm đạo (Tình cảm).",
+        "details": "1. **Đường Sinh Đạo**: Bắt đầu từ kẽ tay giữa ngón cái và trỏ, kéo dài xuống cổ tay. Đường nét sâu, rõ, không đứt đoạn chỉ sức khỏe tốt, tuổi thọ cao. Nếu đứt đoạn hoặc mờ nhạt dễ mắc bệnh tật.\n2. **Đường Trí Đạo**: Thường bắt đầu cùng điểm với Sinh đạo nhưng chạy ngang lòng bàn tay. Chỉ số thông minh, học vấn và cách suy nghĩ. Đường dài, sâu thể hiện người thông minh, có logic tốt. Đường ngắn thì suy nghĩ bốc đồng.\n3. **Đường Tâm Đạo**: Chạy từ dưới ngón út vắt ngang lên phía ngón trỏ hoặc giữa. Thể hiện tình cảm, hôn nhân. Nếu thẳng và sâu là người chung thủy, êm ấm. Nếu chẻ nhánh nhiều hoặc rối rắm là người lận đận tình duyên."
+    }
+]

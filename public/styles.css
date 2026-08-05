@@ -599,3 +599,8 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     transform: scale(1.2);
 }
 
+/* --- Utility Overrides --- */
+.text-muted, .text-secondary {
+    color: #cbd5e1 !important; /* Brighter gray for dark background */
+}
+

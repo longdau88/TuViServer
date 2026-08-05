@@ -3,10 +3,12 @@ const path = require('path');
 
 const KNOWLEDGE_FILE_PATH = path.join(__dirname, '../data/aiKnowledgeBase.json');
 
+const KNOWLEDGE_DIR = path.join(__dirname, '../data/knowledge');
+
 /**
- * Load all knowledge items from JSON file
+ * Get Custom Knowledge from aiKnowledgeBase.json
  */
-const getAllKnowledge = () => {
+const getCustomKnowledge = () => {
     try {
         if (!fs.existsSync(KNOWLEDGE_FILE_PATH)) {
             return [];
@@ -14,65 +16,127 @@ const getAllKnowledge = () => {
         const data = fs.readFileSync(KNOWLEDGE_FILE_PATH, 'utf8');
         return JSON.parse(data || '[]');
     } catch (err) {
-        console.error('getAllKnowledge error:', err);
+        console.error('getCustomKnowledge error:', err);
         return [];
     }
 };
 
 /**
- * Save knowledge array to JSON file
+ * Save custom knowledge array to JSON file
  */
-const saveAllKnowledge = (items) => {
+const saveCustomKnowledge = (items) => {
     try {
         fs.writeFileSync(KNOWLEDGE_FILE_PATH, JSON.stringify(items, null, 2), 'utf8');
         return true;
     } catch (err) {
-        console.error('saveAllKnowledge error:', err);
+        console.error('saveCustomKnowledge error:', err);
         return false;
     }
 };
 
 /**
- * Search Knowledge Base for relevant knowledge nodes (RAG Search)
+ * Get Static Knowledge from all JSON files in src/data/knowledge/
  */
-const searchKnowledge = (query) => {
+const getStaticKnowledge = () => {
+    let staticItems = [];
+    try {
+        if (fs.existsSync(KNOWLEDGE_DIR)) {
+            const files = fs.readdirSync(KNOWLEDGE_DIR);
+            files.forEach(file => {
+                if (file.endsWith('.json')) {
+                    const filePath = path.join(KNOWLEDGE_DIR, file);
+                    const data = fs.readFileSync(filePath, 'utf8');
+                    const parsed = JSON.parse(data || '[]');
+                    if (Array.isArray(parsed)) {
+                        staticItems = staticItems.concat(parsed);
+                    }
+                }
+            });
+        }
+    } catch (err) {
+        console.error('getStaticKnowledge error:', err);
+    }
+    return staticItems;
+};
+
+/**
+ * Load all knowledge items (Static + Custom)
+ */
+const getAllKnowledge = () => {
+    const custom = getCustomKnowledge();
+    const static = getStaticKnowledge();
+    return custom.concat(static);
+};
+
+const vectorDbService = require('./vectorDbService');
+
+/**
+ * Search Knowledge Base for relevant knowledge nodes using Hybrid Search (Semantic + Keyword)
+ */
+const searchKnowledgeAsync = async (query) => {
     if (!query || typeof query !== 'string') return [];
 
     const qLower = query.trim().toLowerCase();
     const all = getAllKnowledge();
-
     const matched = [];
 
-    all.forEach((item) => {
-        let score = 0;
+    // Lấy vector của câu hỏi
+    let queryVector = null;
+    try {
+        queryVector = await vectorDbService.getEmbedding(qLower);
+    } catch (err) {
+        console.error('Lỗi khi lấy vector câu hỏi:', err);
+    }
 
-        // Keyword matches
+    for (const item of all) {
+        let score = 0;
+        let semanticScore = 0;
+
+        // Semantic Match
+        if (queryVector) {
+            // Lấy hoặc tạo vector cho nội dung item (kết hợp title và summary)
+            const textToEmbed = `${item.title}. ${item.summary}`;
+            try {
+                const itemVector = await vectorDbService.getOrCreateVector(item.id, textToEmbed);
+                semanticScore = vectorDbService.cosineSimilarity(queryVector, itemVector);
+                // Cosine similarity trả về -1 đến 1. Chuyển thành điểm 0-100
+                score += Math.max(0, semanticScore * 50); 
+            } catch(e) {
+                console.error('Lỗi khi tính vector item:', e);
+            }
+        }
+
+        // Keyword matches (vẫn giữ để tạo Hybrid Search tốt hơn)
         if (item.keywords && Array.isArray(item.keywords)) {
             item.keywords.forEach((kw) => {
                 const kwLower = kw.toLowerCase();
                 if (qLower.includes(kwLower)) {
-                    score += 10;
+                    score += 15;
                 }
             });
         }
 
-        // Title matches
         if (item.title && qLower.includes(item.title.toLowerCase())) {
-            score += 15;
+            score += 20;
         }
 
-        // Category matches
         if (item.category && qLower.includes(item.category.toLowerCase())) {
             score += 5;
         }
 
-        if (score > 0) {
-            matched.push({ ...item, score });
+        // Nếu điểm cao hơn 15 (nghĩa là có semantic match tốt hoặc keyword match)
+        if (score > 15) {
+            matched.push({ ...item, score, semanticScore });
         }
-    });
+    }
 
     // Sort by relevance score descending
     return matched.sort((a, b) => b.score - a.score);
+};
+
+// Cũ: Giữ lại bản đồng bộ tạm thời (nếu có chỗ dùng cũ)
+const searchKnowledge = (query) => {
+    return [];
 };
 
 /**
@@ -83,7 +147,7 @@ const addKnowledgeItem = (item) => {
         throw new Error('Thiếu thông tin tri thức (bắt buộc: title, details)');
     }
 
-    const items = getAllKnowledge();
+    const items = getCustomKnowledge();
     const id = item.id || `custom_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
     const newItem = {
@@ -97,19 +161,19 @@ const addKnowledgeItem = (item) => {
     };
 
     items.push(newItem);
-    saveAllKnowledge(items);
+    saveCustomKnowledge(items);
     return newItem;
 };
 
 /**
- * Delete a Knowledge Item from the Knowledge Base (Admin API)
+ * Delete a Knowledge Item from the Custom Knowledge Base (Admin API)
  */
 const deleteKnowledgeItem = (id) => {
-    let items = getAllKnowledge();
+    let items = getCustomKnowledge();
     const initialLen = items.length;
     items = items.filter(item => item.id !== id);
     if (items.length !== initialLen) {
-        saveAllKnowledge(items);
+        saveCustomKnowledge(items);
         return true;
     }
     return false;
@@ -118,6 +182,7 @@ const deleteKnowledgeItem = (id) => {
 module.exports = {
     getAllKnowledge,
     searchKnowledge,
+    searchKnowledgeAsync,
     addKnowledgeItem,
     deleteKnowledgeItem,
 };

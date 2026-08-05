@@ -96,8 +96,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function updateSelfProfileUI() {
         if (selfProfile && selfProfile.full_name && selfProfile.birthday) {
+            const dateParts = selfProfile.birthday.split('-');
+            const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : selfProfile.birthday;
             selfDisplayName.innerHTML = `<i class="bi bi-person-check-fill text-warning me-1"></i> ${selfProfile.full_name}`;
-            selfDisplayDetails.textContent = `Ngày sinh: ${selfProfile.birthday} | Giờ sinh: ${selfProfile.birth_time || '08:00'} | Giới tính: ${/female|nu/i.test(selfProfile.gender) ? 'Nữ' : 'Nam'}`;
+            selfDisplayDetails.textContent = `Ngày sinh: ${formattedDate} | Giờ sinh: ${selfProfile.birth_time || '08:00'} | Giới tính: ${/female|nu|nữ/i.test(selfProfile.gender) ? 'Nữ' : 'Nam'}`;
         } else {
             selfDisplayName.innerHTML = `<i class="bi bi-person-fill text-warning me-1"></i> Chưa có thông tin bản thân`;
             selfDisplayDetails.textContent = `Vui lòng cập nhật thông tin cá nhân hoặc chọn "Nhập Thông Tin Người Khác".`;

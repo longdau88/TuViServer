@@ -228,7 +228,7 @@ exports.getPersonalizedAuspiciousDays = async (req, res) => {
         // Check Redis Cache
         const cachedData = await cacheService.get(cacheKey);
         if (cachedData !== undefined) {
-            res.set('Cache-Control', 'private, max-age=300');
+            res.set('Cache-Control', 'no-store');
             return res.json({
                 status: 200,
                 error: 0,
@@ -262,7 +262,7 @@ exports.getPersonalizedAuspiciousDays = async (req, res) => {
         // Store in cache (TTL: 1 hour)
         await cacheService.set(cacheKey, result, 3600);
 
-        res.set('Cache-Control', 'private, max-age=300');
+        res.set('Cache-Control', 'no-store');
         return res.json({
             status: 200,
             error: 0,
@@ -336,18 +336,17 @@ exports.getDailyPersonalizedWidgetController = async (req, res) => {
 
         const cached = await cacheService.get(cacheKey);
         if (cached) {
-            res.set('Cache-Control', 'public, max-age=300');
+            res.set('Cache-Control', 'no-store');
             return res.json({ status: 200, error: 0, message: 'OK (cached)', data: cached });
         }
 
         const widget = auspiciousService.getDailyPersonalizedWidget(personInput, new Date());
         await cacheService.set(cacheKey, widget, 86400); // 24h cache
 
-        res.set('Cache-Control', 'public, max-age=300');
+        res.set('Cache-Control', 'no-store');
         return res.json({ status: 200, error: 0, message: 'OK', data: widget });
     } catch (err) {
         console.error('getDailyPersonalizedWidgetController error:', err);
         return res.status(500).json({ status: 500, error: 1, message: 'Lỗi server khi lấy widget năng lượng cá nhân hóa' });
     }
 };
-

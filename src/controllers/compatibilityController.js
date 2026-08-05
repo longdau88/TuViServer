@@ -102,7 +102,7 @@ exports.getCompatibilityAnalysis = async (req, res) => {
         // Try getting from cache
         const cachedData = await cacheService.get(cacheKey);
         if (cachedData !== undefined) {
-            res.set('Cache-Control', 'private, max-age=300');
+            res.set('Cache-Control', 'no-store');
             return res.json({
                 status: 200,
                 error: 0,
@@ -117,7 +117,7 @@ exports.getCompatibilityAnalysis = async (req, res) => {
         // Store to cache (TTL: 1 hour)
         await cacheService.set(cacheKey, result, 3600);
 
-        res.set('Cache-Control', 'private, max-age=300');
+        res.set('Cache-Control', 'no-store');
         return res.json({
             status: 200,
             error: 0,

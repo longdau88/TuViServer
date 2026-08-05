@@ -337,7 +337,7 @@ exports.getProfileDisplay = async (req, res) => {
             () => buildClientDisplayData(user),
         );
 
-        res.set('Cache-Control', 'private, max-age=120');
+        res.set('Cache-Control', 'no-store');
         return res.json({
             status: 200,
             error: 0,
