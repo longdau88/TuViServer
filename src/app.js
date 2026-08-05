@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const compression = require('compression');
 const routes = require('./routes');
 const { apiLimiter } = require('./middleware/rateLimitMiddleware');
 
@@ -11,6 +12,9 @@ app.set('trust proxy', 1);
 
 // Enable CORS for all routes
 app.use(cors());
+
+// Enable payload compression
+app.use(compression());
 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
