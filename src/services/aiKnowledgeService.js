@@ -64,8 +64,8 @@ const getStaticKnowledge = () => {
  */
 const getAllKnowledge = () => {
     const custom = getCustomKnowledge();
-    const static = getStaticKnowledge();
-    return custom.concat(static);
+    const staticData = getStaticKnowledge();
+    return custom.concat(staticData);
 };
 
 const vectorDbService = require('./vectorDbService');
